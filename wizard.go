@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -76,8 +77,23 @@ func downloadFile(url, dest string) error {
 	return nil
 }
 
+func copyFile(src, dst string) error {
+	input, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(dst, input, 0644)
+}
+
 func downloadWorker() error {
-	fmt.Printf("\n%s Downloading %s...\n", title, fmtStr("worker.js", GREEN, true))
+	fmt.Printf("\n%s Getting %s...\n", title, fmtStr("worker.js", GREEN, true))
+
+	if _, err := os.Stat("worker.js"); err == nil {
+		copyFile("worker.js", workerPath)
+	} else if errors.Is(err, os.ErrNotExist) {
+		fmt.Printf("\nThe file worker.js was %s alongside the BPB-Wizard file\n", fmtStr("not found", RED, true))
+	}
 
 	for {
 		if _, err := os.Stat(workerPath); err != nil {
@@ -89,16 +105,52 @@ func downloadWorker() error {
 			return nil
 		}
 
-		if err := downloadFile(workerURL, workerPath); err != nil {
-			failMessage("Failed to download worker.js\n")
-			log.Printf("%v\n", err)
-			if response := promptUser("- Would you like to try again? (y/n): ", []string{"y", "n"}); strings.ToLower(response) == "n" {
-				os.Exit(0)
-			}
-			continue
+		err := downloadFile(workerURL, workerPath)
+		if err == nil {
+			successMessage("worker.js downloaded successfully!")
+			return nil
 		}
 
-		successMessage("worker.js downloaded successfully!")
+		failMessage("Failed to download worker.js\n")
+		log.Printf("%v\n", err)
+
+		fmt.Printf("\nChoose an option:")
+		fmt.Printf("\n1) Retry download")
+		fmt.Printf("\n2) Load worker.js manually %s\n", fmtStr("BPB-Wizard folder", RED, true))
+		fmt.Printf("\n3) Exit")
+
+		choice := promptUser(
+			"- Select (1/2/3): ",
+			[]string{"1", "2", "3"},
+		)
+
+		switch choice {
+
+		// Retry
+		case "1":
+			continue
+
+		// Manual load
+		case "2":
+			localPath := promptUser(
+				"- Enter path to worker.js file: ",
+				nil,
+			)
+
+			err := copyFile(localPath, workerPath)
+			if err != nil {
+				failMessage("Failed to load local worker.js file.")
+				log.Printf("%v\n", err)
+				continue
+			}
+
+			successMessage("worker.js loaded successfully from local file!")
+			return nil
+
+		// Exit
+		case "3":
+			os.Exit(0)
+		}
 		return nil
 	}
 }
