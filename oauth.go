@@ -56,19 +56,6 @@ func NewClient(ctx context.Context, token *oauth2.Token) (*cf.Client, *oauth2.To
 	return cf.NewClient(option.WithAPIToken(refreshedToken.AccessToken)), refreshedToken, nil
 }
 
-func getAccount(ctx context.Context) (*accounts.Account, error) {
-	res, err := getAccounts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(res) == 0 {
-		return nil, fmt.Errorf("no Cloudflare accounts found")
-	}
-
-	return &res[0], nil
-}
-
 func getAccounts(ctx context.Context) ([]accounts.Account, error) {
 	res, err := cfClient.Accounts.List(ctx, accounts.AccountListParams{})
 	if err != nil {
