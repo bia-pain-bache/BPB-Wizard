@@ -192,48 +192,6 @@ func createPagesDeployment(ctx context.Context, project *pages.Project) (*pages.
 }
 
 func addPagesProjectCustomDomain(ctx context.Context, projectName string, customDomain string) (string, error) {
-	// extractor, err := tldextract.New(cachePath, false)
-	// if err != nil {
-	// 	return "", fmt.Errorf("error extracting TLD: %w", err)
-	// }
-
-	// result := extractor.Extract(customDomain)
-	// domain := fmt.Sprintf("%s.%s", result.Root, result.Tld)
-
-	// zones, err := cfClient.Zones.List(ctx, zones.ZoneListParams{
-	// 	Account: cf.F(zones.ZoneListParamsAccount{
-	// 		ID: cf.F(cfAccount.ID),
-	// 	}),
-	// 	Match: cf.F(zones.ZoneListParamsMatch("contains")),
-	// 	Name:  cf.F(domain),
-	// })
-
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// if len(zones.Result) == 0 {
-	// 	message := fmt.Sprintf("Could not find this domain in your account: %s", domain)
-	// 	return "", fmt.Errorf(message, nil)
-	// }
-
-	// zone := zones.Result[0]
-	// pagesHost := fmt.Sprintf("%s.pages.dev", projectName)
-
-	// _, er := cfClient.DNS.Records.New(ctx, dns.RecordNewParams{
-	// 	ZoneID: cf.F(zone.ID),
-	// 	Record: dns.CNAMERecordParam{
-	// 		Content: cf.F(pagesHost),
-	// 		Name:    cf.F(customDomain),
-	// 		Proxied: cf.F(true),
-	// 		Type:    cf.F(dns.CNAMERecordType("CNAME")),
-	// 	},
-	// }, cfClient.Options...)
-
-	// if er != nil {
-	// 	return "", er
-	// }
-
 	res, err := cfClient.Pages.Projects.Domains.New(ctx, projectName, pages.ProjectDomainNewParams{
 		AccountID: cf.F(cfAccount.ID),
 		Name:      cf.F(customDomain),

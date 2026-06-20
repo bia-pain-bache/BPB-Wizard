@@ -1,60 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>&#x42;&#x50;&#x42; Wizard</title>
+    <title>BPB Wizard - Success</title>
     <style>
-        body,
-        html {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: system-ui;
-            color: var(--color);
-            background-color: var(--background-color);
-            text-align: center;
-        }
-
-        h1 {
-            color: var(--header-color);
-            text-shadow: var(--header-shadow);
-        }
-
-        p {
-            color: var(--color);
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --accent-color: #3182ce;
+            --success-color: #38a169;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border: 1px solid #e2e8f0;
         }
 
         @media (prefers-color-scheme: dark) {
-            body {
-                --color: white;
-                --header-color: #3498DB;
-                --background-color: #121212;
-                --header-shadow: 2px 2px 4px rgba(255, 255, 255, 0.25);
+            :root {
+                --bg-color: #1a202c;
+                --card-bg: #2d3748;
+                --text-main: #f7fafc;
+                --text-muted: #a0aec0;
+                --accent-color: #63b3ed;
+                --success-color: #48bb78;
+                --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+                --border: 1px solid #4a5568;
             }
         }
 
-        @media (prefers-color-scheme: light) {
-            body {
-                --color: black;
-                --header-color: #09639f;
-                --background-color: #fff;
-                --border-color: #ddd;
-                --header-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 3rem 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow);
+            border: var(--border);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
+        }
+
+        .icon-container {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(56, 161, 105, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1.5rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s forwards;
+            transform: scale(0);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .icon-container {
+                background-color: rgba(72, 187, 120, 0.15);
+            }
+        }
+
+        .icon-container svg {
+            width: 40px;
+            height: 40px;
+            color: var(--success-color);
+        }
+
+        @keyframes popIn {
+            to {
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--accent-color), #805ad5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        p {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .terminal-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-top: 0.5rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .terminal-hint {
+                background-color: rgba(255, 255, 255, 0.05);
+            }
+        }
+
+        .terminal-hint svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-color);
+        }
+
+        .droplets {
+            font-size: 1.2em;
+            margin-right: 4px;
         }
     </style>
 </head>
-
 <body>
-    <div>
-        <h1>💦 &#x42;&#x50;&#x42; Wizard</h1>
-        <p>✅ Loged in successfully! you can go back to your terminal.</p>
+    <div class="container">
+        <div class="icon-container">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+        <h1><span class="droplets">💦</span>BPB Wizard</h1>
+        <p>Authentication was successful. You are now securely connected to your Cloudflare account.</p>
+        <div class="terminal-hint">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M4 6h16M4 18h16" />
+            </svg>
+            You can now close this tab and return to the terminal.
+        </div>
     </div>
 </body>
-
 </html>

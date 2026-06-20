@@ -83,7 +83,7 @@ func (sp ScriptUpdateParams) MarshalMultipart() ([]byte, string, error) {
 		return nil, "", fmt.Errorf("error creating package-lock.json part: %w", err)
 	}
 
-	_, err = packageLockPart.Write([]byte("content of package-lock.json"))
+	_, err = packageLockPart.Write([]byte("{}"))
 	if err != nil {
 		return nil, "", fmt.Errorf("error writing package-lock.json content: %w", err)
 	}
@@ -98,7 +98,7 @@ func (sp ScriptUpdateParams) MarshalMultipart() ([]byte, string, error) {
 		return nil, "", fmt.Errorf("error creating package.json part: %w", err)
 	}
 
-	_, err = packageJSONPart.Write([]byte("content of package.json"))
+	_, err = packageJSONPart.Write([]byte("{}"))
 	if err != nil {
 		return nil, "", fmt.Errorf("error writing package.json content: %w", err)
 	}

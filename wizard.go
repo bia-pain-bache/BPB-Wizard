@@ -295,54 +295,6 @@ func openURL(url string) error {
 }
 
 func checkPanel(url string) error {
-	// ticker := time.NewTicker(5 * time.Second)
-	// defer ticker.Stop()
-
-	// dialer := &net.Dialer{
-	// 	Resolver: &net.Resolver{
-	// 		PreferGo: true,
-	// 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-	// 			d := net.Dialer{
-	// 				Timeout: time.Duration(5000) * time.Millisecond,
-	// 			}
-
-	// 			return d.DialContext(ctx, "udp", "8.8.8.8:53")
-	// 		},
-	// 	},
-	// }
-
-	// dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
-	// 	conn, err := dialer.DialContext(ctx, network, addr)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	return conn, nil
-	// }
-
-	// transport := &http.Transport{
-	// 	DisableKeepAlives: true,
-	// 	DialContext:       dialContext,
-	// }
-
-	// client := &http.Client{
-	// 	Transport: transport,
-	// 	Timeout:   15 * time.Second,
-	// }
-
-	// for range ticker.C {
-	// 	resp, err := client.Get(url)
-	// 	if err != nil {
-	// 		fmt.Printf(".")
-	// 		continue
-	// 	}
-
-	// 	if resp.StatusCode != http.StatusOK {
-	// 		fmt.Printf(".")
-	// 		resp.Body.Close()
-	// 		continue
-	// 	}
-
-	// 	resp.Body.Close()
 	message := fmt.Sprintf("\u0042\u0050\u0042 panel is ready -> %s", fmtStr(url, BLUE, true))
 	successMessage(message)
 	prompt := fmt.Sprintf("- Would you like to open %s in browser? (y/n): ", fmtStr("\u0042\u0050\u0042 panel", BLUE, true))
@@ -356,9 +308,6 @@ func checkPanel(url string) error {
 	}
 
 	return nil
-	// }
-
-	// return nil
 }
 
 func runWizard() {
