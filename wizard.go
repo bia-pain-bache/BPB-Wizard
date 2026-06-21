@@ -278,9 +278,9 @@ func openURL(url string) error {
 }
 
 func checkPanel(url string) error {
-	message := fmt.Sprintf("\u0042\u0050\u0042 panel is ready -> %s", fmtStr(url, BLUE, true))
+	message := fmt.Sprintf("Che panel is ready -> %s", fmtStr(url, BLUE, true))
 	successMessage(message)
-	prompt := fmt.Sprintf("- Would you like to open %s in browser? (y/n): ", fmtStr("\u0042\u0050\u0042 panel", BLUE, true))
+	prompt := fmt.Sprintf("- Would you like to open %s in browser? (y/n): ", fmtStr("Che panel", BLUE, true))
 
 	if response := promptUser(prompt, []string{"y", "n"}); strings.ToLower(response) == "n" {
 		return nil
@@ -295,24 +295,27 @@ func checkPanel(url string) error {
 
 func runWizard() {
 	renderHeader()
-	fmt.Printf("\n%s Welcome to %s!\n", title, fmtStr("\u0042\u0050\u0042 Wizard", GREEN, true))
-	fmt.Printf("%s This wizard will help you to deploy or modify %s on Cloudflare.\n", info, fmtStr("\u0042\u0050\u0042 Panel", BLUE, true))
-	fmt.Printf("%s Please make sure you have a verified %s account.\n", info, fmtStr("Cloudflare", ORANGE, true))
-
-	ctx := context.Background()
-	if err := ensureCloudflareAuth(ctx); err != nil {
-		failMessage("Failed to login Cloudflare.")
-		log.Fatalln(err)
-	}
+	fmt.Printf("\n%s Welcome to %s!\n", title, fmtStr("Che Wizard", GREEN, true))
+	fmt.Printf("%s This wizard will help you to deploy or modify %s on Cloudflare, and scan for IPs/Warp.\n", info, fmtStr("Che Panel", BLUE, true))
 
 	for {
-		message := fmt.Sprintf("1- %s a new panel.\n2- %s an existing panel.\n\n- Select: ", fmtStr("CREATE", GREEN, true), fmtStr("MODIFY", RED, true))
-		response := promptUser(message, []string{"1", "2"})
+		message := fmt.Sprintf("1- %s or %s Panel.\n2- %s Cloudflare Clean IP.\n3- %s Warp Endpoints.\n\n- Select: ",
+			fmtStr("DEPLOY", GREEN, true), fmtStr("MODIFY", RED, true),
+			fmtStr("SCAN", BLUE, true), fmtStr("SCAN", ORANGE, true))
+		response := promptUser(message, []string{"1", "2", "3"})
 		switch response {
 		case "1":
-			createPanel()
+			fmt.Printf("%s Please make sure you have a verified %s account.\n", info, fmtStr("Cloudflare", ORANGE, true))
+			ctx := context.Background()
+			if err := ensureCloudflareAuth(ctx); err != nil {
+				failMessage("Failed to login Cloudflare.")
+				log.Fatalln(err)
+			}
+			panelMenu()
 		case "2":
-			modifyPanel()
+			runIPScanner()
+		case "3":
+			runWarpScanner()
 		}
 
 		res := promptUser("- Would you like to run the wizard again? (y/n): ", []string{"y", "n"})
@@ -320,6 +323,17 @@ func runWizard() {
 			fmt.Printf("\n%s Exiting...\n", title)
 			return
 		}
+	}
+}
+
+func panelMenu() {
+	message := fmt.Sprintf("1- %s a new panel.\n2- %s an existing panel.\n\n- Select: ", fmtStr("CREATE", GREEN, true), fmtStr("MODIFY", RED, true))
+	response := promptUser(message, []string{"1", "2"})
+	switch response {
+	case "1":
+		createPanel()
+	case "2":
+		modifyPanel()
 	}
 }
 
@@ -434,7 +448,7 @@ func createPanel() {
 			break
 		}
 
-		fmt.Printf("\n%s The default %s are listed here: %s", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/\u0042\u0050\u0042-Worker-Panel/blob/main/docs/NAT64Prefixes.md", ORANGE, true))
+		fmt.Printf("\n%s The default %s are listed here: %s", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/Che-Worker-Panel/blob/main/docs/NAT64Prefixes.md", ORANGE, true))
 		for {
 			if response := promptUser("- Please enter custom NAT64 Prefixes or press ENTER to use default: ", nil); response != "" {
 				areValid := true
@@ -522,7 +536,7 @@ func createPanel() {
 	}
 
 	if err := checkPanel(panel); err != nil {
-		failMessage("Failed to checkout \u0042\u0050\u0042 panel.")
+		failMessage("Failed to checkout Che panel.")
 		log.Fatalln(err)
 	}
 }

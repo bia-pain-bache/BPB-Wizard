@@ -32,8 +32,8 @@ else
 fi
 
 BINARY="Wizard"
-ARCHIVE="BPB-Wizard-${OS_LOWER}-${ARCH}.${EXT}"
-LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION)
+ARCHIVE="Che-Wizard-${OS_LOWER}-${ARCH}.${EXT}"
+LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/Che-Wizard/main/VERSION)
 
 if [ -x "./${BINARY}" ]; then
     INSTALLED_VERSION=$("./${BINARY}" --version)
@@ -51,7 +51,7 @@ else
 fi
 
 echo "Downloading ${ARCHIVE}..."
-curl -L -# -o "${ARCHIVE}" "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/${ARCHIVE}"
+curl -L -# -o "${ARCHIVE}" "https://github.com/bia-pain-bache/Che-Wizard/releases/latest/download/${ARCHIVE}"
 
 if [ "$EXT" = "zip" ]; then
     unzip -q -o "${ARCHIVE}"

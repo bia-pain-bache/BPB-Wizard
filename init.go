@@ -85,7 +85,7 @@ func initPaths() {
 		dir = os.TempDir()
 	}
 
-	cacheDir := filepath.Join(dir, "\u0042\u0050\u0042-Wizard")
+	cacheDir := filepath.Join(dir, "Che-Wizard")
 	if err := os.MkdirAll(cacheDir, 0700); err != nil {
 		failMessage("Failed to create cache directory.")
 		log.Fatalln(err)

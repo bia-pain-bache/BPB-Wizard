@@ -9,7 +9,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-const tokenStoreService = "\u0042\u0050\u0042-Wizard"
+const tokenStoreService = "Che-Wizard"
 
 type cloudflareLoginStore struct {
 	ActiveEmail string            `json:"active_email"`
