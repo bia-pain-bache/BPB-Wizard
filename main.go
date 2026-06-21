@@ -11,11 +11,13 @@ import (
 	"time"
 )
 
+import _ "embed"
+
 var (
+	//go:embed worker.js
 	workerJS  []byte
 	cachePath string
 	isAndroid = false
-	workerURL = "https://github.com/bia-pain-bache/\u0042\u0050\u0042-Worker-Panel/releases/latest/download/worker.js"
 	VERSION   = "dev"
 )
 

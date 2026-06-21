@@ -100,28 +100,11 @@ func isTrustedWorkerDownloadHost(host string) bool {
 }
 
 func downloadWorker() error {
-	fmt.Printf("\n%s Downloading %s...\n", title, fmtStr("worker.js", GREEN, true))
-
-	for {
-		if workerJS != nil {
-			successMessage("worker.js already exists in memory, skipping download.")
-			return nil
-		}
-
-		content, err := downloadFile(workerURL)
-		if err != nil {
-			failMessage("Failed to download worker.js\n")
-			log.Printf("%v\n", err)
-			if response := promptUser("- Would you like to try again? (y/n): ", []string{"y", "n"}); strings.ToLower(response) == "n" {
-				os.Exit(0)
-			}
-			continue
-		}
-
-		workerJS = content
-		successMessage("worker.js downloaded successfully!")
+	if workerJS != nil {
+		successMessage("worker.js loaded successfully!")
 		return nil
 	}
+	return fmt.Errorf("worker.js is nil")
 }
 
 func generateRandomString(charSet string, length int, isDomain bool) string {
