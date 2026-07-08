@@ -6,7 +6,7 @@ export default {
 			const origin = request.headers.get('Origin').toLowerCase();
 			if (origin !== url.origin) {
 				return new Response('Unauthorized context', { status: 403 });
-			}
+			} 
 
 			const { readable, writable } = new TransformStream();
 			const writer = writable.getWriter();
