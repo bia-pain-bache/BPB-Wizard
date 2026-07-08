@@ -143,7 +143,7 @@ async function createKv(accountId, apiToken, workerName, deployType, log, error)
 
 async function buildScript(accountId, accountName, apiToken, workerName, subdomain, error) {
 	const url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/download/v5.0.0/worker.js';
-	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@$&*_-+;:,.';
+	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456780-_';
 
 	const res = await fetch(url);
 	if (!res.ok) {
@@ -351,6 +351,7 @@ async function decrypt(encrypted, secret) {
 }
 
 function extractEmail(str) {
-	const match = str.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-	return match ? match[0] : null;
+	// const match = str.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+	// return match ? match[0] : null;
+	return str.split("'s ")[0].toLowerCase();
 }
