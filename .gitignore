@@ -13,6 +13,8 @@
 !Makefile
 !static/
 !static/**
+!public/
+!public/**
 !RELEASE.md
 !assets
 !assets/**
