@@ -1,0 +1,10 @@
+name = "wizard"
+main = "public/index.js"
+compatibility_date = "2026-07-08"
+workers_dev = true
+keep_vars = true
+
+[assets]
+directory = "public/assets"
+binding = "ASSETS"
+run_worker_first = true

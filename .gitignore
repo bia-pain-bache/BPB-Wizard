@@ -15,6 +15,7 @@
 !static/**
 !public/
 !public/**
+!wrangler.toml
 !RELEASE.md
 !assets
 !assets/**
