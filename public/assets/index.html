@@ -7,6 +7,11 @@
     <title>BPB Wizard</title>
     <link href="styles.css" rel="stylesheet" />
     <link rel="icon" href="favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
+        rel="stylesheet">
 </head>
 
 <body>
@@ -25,8 +30,7 @@
                             up</a> a Cloudflare account and verify it.
                     </li>
                     <li>
-                        <a href="https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22workers_scripts%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22workers_kv_storage%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22page%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22edit%22%7D%2C%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%5D&accountId=*&zoneId=all&name=BPB-Wizard"
-                            target="_blank" rel="noopener noreferrer">Create a token</a>
+                        <a id="tokenTemplate" href="" target="_blank" rel="noopener noreferrer">Create a token</a>
                         , you should <b>Continue to summary</b>, <b>Create Token</b> and copy it.
                     </li>
                     <li>Paste it here, choose installation method and install.</li>

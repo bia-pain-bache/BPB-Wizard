@@ -3,28 +3,44 @@ const togglePass = document.getElementById('togglePassword');
 const closeDeploymentToast = document.getElementById('closeDeploymentToast');
 const closePrivateUrlToast = document.getElementById('closePrivateUrlToast');
 const copyURL = document.getElementById('copyURL');
-const out = document.getElementById("output");
+const out = document.getElementById('output');
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
+    const permissions = [
+        { key: 'workers_scripts', type: 'edit' },
+        { key: 'workers_kv_storage', type: 'edit' },
+        { key: 'page', type: 'edit' },
+        { key: 'dns', type: 'edit' },
+        { key: 'user_details', type: 'read' }
+    ];
+
+    const permissionParam = JSON.stringify(permissions);
+    const url = new URL('https://dash.cloudflare.com/profile/api-tokens');
+    url.searchParams.set('permissionGroupKeys', permissionParam);
+    url.searchParams.set('accountId', '*');
+    url.searchParams.set('zoneId', 'all');
+    url.searchParams.set('name', 'BPB-Wizard');
+    document.getElementById('tokenTemplate').href = url.href;
+
     const urlParams = new URLSearchParams(window.location.search);
-    const key = urlParams.get("key");
-    const user = urlParams.get("user");
+    const key = urlParams.get('key');
+    const user = urlParams.get('user');
     if (key && user) {
         globalThis.isPrivateLink = true;
-        const userElm = document.getElementById("user");
-        document.getElementById("apiToken").removeAttribute("required");
-        document.getElementById("apiTokenGroup").style.display = "none";
-        document.getElementById("steps").style.display = "none";
-        userElm.textContent = user;
-        userElm.style.display = "block";
+        const userElm = document.getElementById('user');
+        document.getElementById('apiToken').removeAttribute('required');
+        document.getElementById('apiTokenGroup').style.display = 'none';
+        document.getElementById('steps').style.display = 'none';
+        userElm.textContent = `Cloudflare Account: ${user}`;
+        userElm.style.display = 'block';
     }
 });
 
 copyURL.addEventListener('click', () => {
     const { user, key } = globalThis;
     const url = new URL(window.location.href);
-    url.searchParams.set("user", user);
-    url.searchParams.set("key", key);
+    url.searchParams.set('user', user);
+    url.searchParams.set('key', key);
     navigator.clipboard.writeText(url.href);
 });
 
@@ -55,7 +71,7 @@ closePrivateUrlToast.addEventListener('click', () => {
 async function startDeploymentPipeline(payload) {
     try {
         const response = await fetch(`/api/deploy${location.search}`, {
-            method: "POST",
+            method: 'POST',
             body: payload
         });
 
@@ -65,14 +81,14 @@ async function startDeploymentPipeline(payload) {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = "";
+        let buffer = '';
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
+            const lines = buffer.split('\n');
             buffer = lines.pop();
 
             for (const line of lines) {
@@ -80,38 +96,45 @@ async function startDeploymentPipeline(payload) {
                 const { type, message } = JSON.parse(line);
                 const handlers = {
                     log: () => {
-                        log("info", message);
+                        log('info', message);
                     },
                     error: () => {
-                        log("error", message);
-                        log("info", "Standby...\n");
+                        log('error', message);
+                        log('info', 'Standby...\n');
                     },
                     complete: () => {
-                        log("success", "BPB Panel successfully deployed!");
+                        log('success', 'BPB Panel successfully deployed!');
                         if (message) {
                             const payload = JSON.parse(message);
-                            log("success", "Panel URL: ", payload.url);
+                            log('success', 'Panel URL: ', payload.url);
+                            
                             if (!globalThis.isPrivateLink) {
                                 globalThis.key = payload.key;
                                 globalThis.user = payload.user;
+                                
                                 const privateUrlToast = document.getElementById('privateUrlToast');
-                                privateUrlToast.style.display = "flex";
+                                privateUrlToast.style.display = 'flex';
                             }
 
                             const deploymentToast = document.getElementById('deploymentToast');
                             const link = document.getElementById('liveUrl');
-                            if (link) link.href = payload.url;
-                            deploymentToast.style.display = "flex";
+                            
+                            if (link) {
+                                link.href = payload.url;
+                            }
+
+                            deploymentToast.style.display = 'flex';
                         }
 
-                        log("info", "Standby...\n");
+                        log('info', 'Standby...\n');
                     }
                 };
+
                 handlers[type]?.();
             }
         }
     } catch (err) {
-        log("Fatal execution termination: " + err.message);
+        log('Fatal execution termination: ' + err.message);
     }
 }
 

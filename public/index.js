@@ -6,7 +6,7 @@ export default {
 			const origin = request.headers.get('Origin').toLowerCase();
 			if (origin !== url.origin) {
 				return new Response('Unauthorized context', { status: 403 });
-			} 
+			}
 
 			const { readable, writable } = new TransformStream();
 			const writer = writable.getWriter();
@@ -24,10 +24,10 @@ export default {
 					const apiToken = key ? await decrypt(key, env.SECRET) : formData.get('apiToken')?.trim();
 					const deployType = formData.get('deployType')?.trim() || 'workers';
 
-					const { accountId, accountName } = await validateToken(apiToken, log, error);
+					const { accountId, userEmail } = await validateToken(apiToken, log, error);
 					if (!accountId) return;
 
-					const workerName = generateRandomString('abcdefghijklmnopqrstuvwxyz0123456789');
+					const workerName = generateSubdomain();
 					const validSubdomain = await validateSubdomain(workerName, deployType, accountId, apiToken, log, error);
 					if (!validSubdomain) return;
 
@@ -35,12 +35,12 @@ export default {
 					if (!namespaceId) return;
 
 					if (deployType === 'pages') {
-						await deployPages(env, accountId, accountName, apiToken, workerName, namespaceId, log, error, complete);
+						await deployPages(env, accountId, userEmail, apiToken, workerName, namespaceId, log, error, complete);
 					} else {
-						await deployWorkers(env, accountId, accountName, apiToken, workerName, namespaceId, log, error, complete);
+						await deployWorkers(env, accountId, userEmail, apiToken, workerName, namespaceId, log, error, complete);
 					}
 				} catch (err) {
-					await error('Execution exception crash: ' + err.message);
+					await error('Execution crash: ' + err.message);
 				} finally {
 					await writer.close();
 				}
@@ -63,52 +63,72 @@ export default {
 
 const createCfApi = (accountId) => {
 	const base = 'https://api.cloudflare.com/client/v4';
+	const accounts = `${base}/accounts`;
+	
 	if (!accountId) return {
-		accounts: `${base}/accounts`,
+		accounts,
+		user: `${base}/user`,
 		tokens: `${base}/user/tokens/verify`,
 	}
 
+	const userAccount = `${accounts}/${accountId}`;
+
 	return {
-		kv: `${base}/accounts/${accountId}/storage/kv/namespaces`,
-		workers: `${base}/accounts/${accountId}/workers`,
-		workersScripts: `${base}/accounts/${accountId}/workers/scripts`,
-		pages: `${base}/accounts/${accountId}/pages`,
-		pagesProjects: `${base}/accounts/${accountId}/pages/projects`
+		kv: `${userAccount}/storage/kv/namespaces`,
+		workers: `${userAccount}/workers`,
+		workersScripts: `${userAccount}/workers/scripts`,
+		pages: `${userAccount}/pages`,
+		pagesProjects: `${userAccount}/pages/projects`
 	};
 };
 
 async function validateToken(apiToken, log, error) {
 	await log(`Checking API Token...`);
 	const api = createCfApi();
+	
 	const res = await fetch(api.tokens, {
 		method: 'GET',
 		headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' }
 	});
+	
 	const data = await res.json();
 	if (!data.success) {
 		await error('API token is not valid.');
 		return false;
 	}
 
-	const listRes = await fetch(api.accounts, {
+	const accRes = await fetch(api.accounts, {
 		method: 'GET',
 		headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' }
 	});
-	const listData = await listRes.json();
-	if (!listData.success) {
-		await error('Credentials are not valid, check Account ID and API token again.');
+	
+	const accData = await accRes.json();
+	if (!accData.success) {
+		await error('Credentials are not valid, check API token or its permissions.');
+		return false;
+	}
+
+	const userRes = await fetch(api.user, {
+		method: 'GET',
+		headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' }
+	});
+	
+	const userData = await userRes.json();
+	if (!userData.success) {
+		await error('Credentials are not valid, check API token or its permissions');
 		return false;
 	}
 
 	return {
-		accountId: listData.result[0].id,
-		accountName: listData.result[0].name
+		accountId: accData.result[0].id,
+		userEmail: userData.result.email
 	}
 }
 
 async function validateSubdomain(workerName, deployType, accountId, apiToken, log, error) {
 	const api = createCfApi(accountId);
 	const url = deployType === 'pages' ? api.pagesProjects : api.workersScripts;
+	
 	const res = await fetch(`${url}/${workerName}`, {
 		method: 'GET',
 		headers: { 'Authorization': `Bearer ${apiToken}` }
@@ -124,14 +144,17 @@ async function validateSubdomain(workerName, deployType, accountId, apiToken, lo
 
 async function createKv(accountId, apiToken, workerName, deployType, log, error) {
 	await log(`Creating KV namespace...`);
+	
 	const now = new Date();
 	const kvName = `${workerName}-${deployType}-${now.toISOString()}`;
 	const api = createCfApi(accountId);
+	
 	const res = await fetch(api.kv, {
 		method: 'POST',
 		headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
 		body: JSON.stringify({ title: kvName })
 	});
+	
 	const data = await res.json();
 	if (!data.success) {
 		await error('Failed to create KV storage.');
@@ -141,9 +164,10 @@ async function createKv(accountId, apiToken, workerName, deployType, log, error)
 	return data.result.id;
 }
 
-async function buildScript(accountId, accountName, apiToken, workerName, subdomain, error) {
-	const url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/download/v5.0.0/worker.js';
-	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456780-_';
+async function buildScript(accountId, userEmail, apiToken, workerName, subdomain, error) {
+	const url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/download/v5.1.0/worker.js';
+	const pathCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456780-_';
+	const passCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@$&*_-+;:,.';
 
 	const res = await fetch(url);
 	if (!res.ok) {
@@ -151,14 +175,17 @@ async function buildScript(accountId, accountName, apiToken, workerName, subdoma
 		return;
 	}
 
-	let script = await res.text();
+	const script = await res.text();
+	const buildTimestamp = new Date().toISOString();
+	const padding = paddCode();
+	
 	const embededSettings = {
 		accID: accountId,
-		accEmail: extractEmail(accountName),
+		accEmail: userEmail.toLowerCase(),
 		apiToken: apiToken,
 		vlUUID: crypto.randomUUID(),
-		trPass: generateRandomString(charset, 16),
-		securePath: generateRandomString(charset, 16),
+		trPass: generateRandomString(passCharset, 16),
+		securePath: generateRandomString(pathCharset, 16),
 		proxyIpMode: 'proxyip',
 		proxyIPs: [],
 		prefixes: [],
@@ -167,9 +194,12 @@ async function buildScript(accountId, accountName, apiToken, workerName, subdoma
 		mainDomain: `${workerName}.${subdomain}`
 	};
 
-	const worker = `
-        const EMBEDED_SETTINGS = ${JSON.stringify(embededSettings)};
-        ${script}`;
+	const worker = [
+		`// ${userEmail.toLowerCase()}`,
+		`// Build: ${buildTimestamp}`,
+		'// @ts-nocheck',
+		`${padding}const EMBEDED_SETTINGS = ${JSON.stringify(embededSettings)};${script}`
+	].join('\r\n');
 
 	return {
 		script: worker,
@@ -177,12 +207,13 @@ async function buildScript(accountId, accountName, apiToken, workerName, subdoma
 	}
 }
 
-async function deployPages(env, accountId, accountName, apiToken, workerName, namespaceId, log, error, complete) {
+async function deployPages(env, accountId, userEmail, apiToken, workerName, namespaceId, log, error, complete) {
 	await log('Building BPB Panel script...');
-	const { script, settings } = await buildScript(accountId, accountName, apiToken, workerName, 'pages.dev', error);
+	const { script, settings } = await buildScript(accountId, userEmail, apiToken, workerName, 'pages.dev', error);
 
 	await log(`Creating Pages project...`);
 	const api = createCfApi(accountId);
+	
 	const createRes = await fetch(api.pagesProjects, {
 		method: 'POST',
 		headers: {
@@ -213,6 +244,7 @@ async function deployPages(env, accountId, accountName, apiToken, workerName, na
 	const uploadForm = new FormData();
 	uploadForm.append('manifest', '{}');
 	uploadForm.append('_worker.js', new Blob([script], { type: 'application/javascript' }), '_worker.js');
+	
 	const deployRes = await fetch(`${api.pagesProjects}/${workerName}/deployments`, {
 		method: 'POST',
 		headers: { 'Authorization': `Bearer ${apiToken}` },
@@ -225,27 +257,32 @@ async function deployPages(env, accountId, accountName, apiToken, workerName, na
 		return;
 	}
 
-	const path = encodeURIComponent(settings.securePath);
+	const url = new URL(`https://${createData.result.subdomain}/${settings.securePath}/panel`);
 	const payload = {
-		url: `https://${createData.result.subdomain}/${path}/panel`,
-		user: accountName,
+		url: url.href,
+		user: userEmail,
 		key: await encrypt(apiToken, env.SECRET)
 	}
 
 	await complete(JSON.stringify(payload));
 }
 
-async function deployWorkers(env, accountId, accountName, apiToken, workerName, namespaceId, log, error, complete) {
+async function deployWorkers(env, accountId, userEmail, apiToken, workerName, namespaceId, log, error, complete) {
 	const api = createCfApi(accountId);
 
 	const subRes = await fetch(`${api.workers}/subdomain`, {
 		headers: { 'Authorization': `Bearer ${apiToken}` }
 	});
+	
 	const subData = await subRes.json();
+	if (!subData.success) {
+		await error('Failed to get global workers subdomain: ' + JSON.stringify(subData.errors));
+		return;
+	}
 	const subdomain = `${subData.result.subdomain}.workers.dev`;
 
 	await log('Building BPB Panel script...');
-	const { script, settings } = await buildScript(accountId, accountName, apiToken, workerName, subdomain, error);
+	const { script, settings } = await buildScript(accountId, userEmail, apiToken, workerName, subdomain, error);
 
 	await log('Deploying BPB Panel...');
 	const metadata = {
@@ -269,26 +306,41 @@ async function deployWorkers(env, accountId, accountName, apiToken, workerName, 
 
 	const deployData = await deployRes.json();
 	if (!deployData.success) {
-		console.log('Deploy Data:', JSON.stringify(deployData, null, 2));
-		await error('Deployment Failed.');
+		await error('Deployment Failed: ' + JSON.stringify(deployData.errors));
 		return;
 	}
 
 	await log('Activating subdomain...');
 	await fetch(`${api.workersScripts}/${workerName}/subdomain`, {
 		method: 'POST',
-		headers: { 'Authorization': `Bearer ${apiToken}`, 'Content-Type': 'application/json' },
-		body: JSON.stringify({ enabled: true, previews_enabled: true })
+		headers: { 
+			'Authorization': `Bearer ${apiToken}`, 
+			'Content-Type': 'application/json' 
+		},
+		body: JSON.stringify({ 
+			enabled: true, 
+			previews_enabled: true 
+		})
 	});
 
-	const path = encodeURIComponent(settings.securePath);
+	const url = new URL(`https://${workerName}.${subdomain}/${settings.securePath}/panel`);
 	const payload = {
-		url: `https://${workerName}.${subdomain}/${path}/panel`,
-		user: accountName,
+		url: url.href,
+		user: userEmail,
 		key: await encrypt(apiToken, env.SECRET)
 	}
 
 	await complete(JSON.stringify(payload));
+}
+
+function generateSubdomain() {
+	const charset = 'abcdefghijklmnopqrstuvwxyz0123456789--';
+	let subdomain;
+	do {
+		subdomain = generateRandomString(charset);
+	} while (subdomain.startsWith('-') || subdomain.endsWith('-'));
+
+	return subdomain;
 }
 
 function generateRandomString(charset, len) {
@@ -296,7 +348,11 @@ function generateRandomString(charset, len) {
 	const arr = new Uint8Array(length);
 	crypto.getRandomValues(arr);
 	let string = '';
-	for (let i = 0; i < length; i++) { string += charset[arr[i] % charset.length]; }
+	
+	for (let i = 0; i < length; i++) { 
+		string += charset[arr[i] % charset.length]; 
+	}
+
 	return string;
 }
 
@@ -332,26 +388,44 @@ async function encrypt(text, secret) {
 	result.set(new Uint8Array(encrypted), iv.length);
 	const base64Result = btoa(String.fromCharCode(...result));
 
-	return encodeURIComponent(base64Result);
+	return base64Result;
 }
 
 async function decrypt(encrypted, secret) {
-	const key = await importKey(secret);
-	const decoded = decodeURIComponent(encrypted);
-	const bytes = Uint8Array.from(atob(decoded), c => c.charCodeAt(0));
-	const iv = bytes.slice(0, 12);
-	const data = bytes.slice(12);
-	const decrypted = await crypto.subtle.decrypt(
-		{ name: 'AES-GCM', iv },
-		key,
-		data
-	);
+	try {
+		const key = await importKey(secret);
+		const bytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+		const iv = bytes.slice(0, 12);
+		const data = bytes.slice(12);
+		const decrypted = await crypto.subtle.decrypt(
+			{ name: 'AES-GCM', iv },
+			key,
+			data
+		);
 
-	return decoder.decode(decrypted);
+		return decoder.decode(decrypted);
+	} catch (error) {
+		throw new Error('Wizard API token had been changed since v5.1.0, Please go to wizard main page and create a new token.\n');
+	}
 }
 
-function extractEmail(str) {
-	// const match = str.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-	// return match ? match[0] : null;
-	return str.split("'s ")[0].toLowerCase();
+function paddCode() {
+	const minVars = 50, maxVars = 500;
+	const minFuncs = 50, maxFuncs = 500;
+
+	const varCount = Math.floor(Math.random() * (maxVars - minVars + 1)) + minVars;
+	const funcCount = Math.floor(Math.random() * (maxFuncs - minFuncs + 1)) + minFuncs;
+
+	const paddVars = Array.from({ length: varCount }, (_, i) => {
+		const varName = `__padd_${Math.random().toString(36).substring(2, 10)}_${i}`;
+		const value = Math.floor(Math.random() * 100000);
+		return `let ${varName} = ${value};`;
+	}).join('\n');
+
+	const paddFuncs = Array.from({ length: funcCount }, (_, i) => {
+		const funcName = `__paddFunc_${Math.random().toString(36).substring(2, 10)}_${i}`;
+		return `function ${funcName}() { return ${Math.floor(Math.random() * 1000)}; }`;
+	}).join('\n');
+
+	return `${paddVars}\n${paddFuncs}\n`;
 }

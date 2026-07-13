@@ -13,7 +13,6 @@
 
     --color-brand-primary: #3b82f6;
     --color-brand-hover: #60a5fa;
-    --color-brand-light-focus: rgba(147, 197, 253, 0.5);
 
     --color-info: #60a5fa;
     --color-success: #4ade80;
@@ -30,7 +29,7 @@
     --space-xl: 2rem;
 
     --font-size-xs: 0.75rem;
-    --font-size-sm: 0.875rem;
+    --font-size-sm: 0.95rem;
     --font-size-base: 1rem;
     --font-size-lg: 1.5rem;
 
@@ -53,6 +52,13 @@
     padding: 0;
 }
 
+body {
+    font-family: "Ubuntu", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-bg-main);
+}
+
 h4 {
     font-weight: 500;
 }
@@ -71,13 +77,6 @@ ol {
     text-align: left;
     font-size: smaller;
     line-height: 2;
-}
-
-body {
-    font-family: system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    background: var(--color-bg-main);
 }
 
 .flex-center,
@@ -244,10 +243,6 @@ body {
     font-size: var(--font-size-base);
     transition: var(--transition-standard);
     outline: none;
-}
-
-.btn-primary:focus {
-    box-shadow: 0 0 0 2px var(--color-brand-light-focus);
 }
 
 .btn-primary:hover {
