@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net"
 	"net/url"
@@ -28,7 +29,16 @@ var (
 	ColorBlue  = Color{96, 165, 250}
 )
 
+var VERSION string
+
 func main() {
+	versionFlag := flag.Bool("version", false, "print version info")
+	flag.Parse()
+	if *versionFlag {
+		fmt.Println(VERSION)
+		os.Exit(0)
+	}
+
 	ctx := context.Background()
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -38,6 +48,11 @@ func main() {
 		fmt.Println("\nShutting down...")
 		os.Exit(0)
 	}()
+
+	if val, ok := os.LookupEnv("LAUNCHED_BY_SCRIPT"); !ok || val != "1" {
+		fmt.Println("BPB Wizard can not be executed standalone.")
+		os.Exit(1)
+	}
 
 	logger := NewLogger()
 	configTermux(logger)
@@ -107,7 +122,7 @@ func main() {
 			workerName = subdomain
 			break
 		}
-		
+
 		fmt.Println()
 		logger.Info("Installing BPB Panel...")
 		namespaceID, err := acc.CreateKVNamespace(ctx, workerName, deployType)
@@ -390,7 +405,7 @@ func configTermux(logger *Logger) {
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 			d := net.Dialer{Timeout: 5 * time.Second}
 			servers := []string{
-				"1.1.1.1:53", 
+				"1.1.1.1:53",
 				"8.8.8.8:53",
 				"9.9.9.9:53",
 				"223.5.5.5",

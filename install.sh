@@ -31,34 +31,49 @@ else
     EXT="tar.gz"
 fi
 
-BINARY="Wizard"
+BINARY="wizard"
+INSTALL_DIR="bpb-wizard"
 ARCHIVE="BPB-Wizard-${OS_LOWER}-${ARCH}.${EXT}"
+WORKER_URL="https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
+
 LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION)
 
-if [ -x "./${BINARY}" ]; then
-    INSTALLED_VERSION=$("./${BINARY}" --version)
+mkdir -p "${INSTALL_DIR}"
+
+if [ -x "${INSTALL_DIR}/${BINARY}" ]; then
+    INSTALLED_VERSION=$("${INSTALL_DIR}/${BINARY}" --version)
     echo "Installed version: $INSTALLED_VERSION"
     echo "Latest version: ${LATEST_VERSION}"
 
     if [ "${INSTALLED_VERSION}" = "${LATEST_VERSION}" ]; then
-        echo "Wizard is up to date. Running..."
-        exec ./"${BINARY}"
+        echo "Wizard is up to date."
     else
         echo "Updating to version ${LATEST_VERSION}..."
+    NEEDS_INSTALL=1
     fi
 else
-    echo "Wizard not found on device. Installing version ${LATEST_VERSION}..."
+    echo "Wizard not found here. Installing version ${LATEST_VERSION}..."
+    NEEDS_INSTALL=1
 fi
 
-echo "Downloading ${ARCHIVE}..."
-curl -L -# -o "${ARCHIVE}" "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/${ARCHIVE}"
+if [ "${NEEDS_INSTALL}" = "1" ]; then
+    echo "Downloading ${ARCHIVE}..."
+    curl -L -# -o "${ARCHIVE}" "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/${ARCHIVE}"
 
-if [ "$EXT" = "zip" ]; then
-    unzip -q -o "${ARCHIVE}"
-else
-    tar xzf "${ARCHIVE}"
+    if [ "$EXT" = "zip" ]; then
+        unzip -q -o "${ARCHIVE}" -d "${INSTALL_DIR}"
+    else
+        tar xzf "${ARCHIVE}" -C "${INSTALL_DIR}"
+    fi
+
+    rm -f "${ARCHIVE}"
+    chmod +x "${INSTALL_DIR}/${BINARY}"
 fi
 
-rm -f "${ARCHIVE}"
-chmod +x "./${BINARY}" && \
-exec ./"${BINARY}"
+echo "Downloading worker.js..."
+curl -fsSL -o "${INSTALL_DIR}/worker.js" "${WORKER_URL}"
+
+export LAUNCHED_BY_SCRIPT="1"
+
+cd "${INSTALL_DIR}" || exit 1
+exec "./${BINARY}"

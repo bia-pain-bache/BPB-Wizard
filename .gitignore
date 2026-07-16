@@ -16,6 +16,7 @@
 !wrangler.toml
 !RELEASE.md
 !install.sh
+!install.ps1
 !assets
 !assets/**
 !VERSION
