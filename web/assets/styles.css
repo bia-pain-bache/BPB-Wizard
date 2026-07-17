@@ -282,9 +282,9 @@ ol {
     border-radius: var(--radius-ui);
     padding: var(--space-lg);
     margin-top: var(--space-xl);
-    font-size: var(--font-size-xs);
-    line-height: var(--line-height-xs);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-sm);
+    font-family: "Ubuntu Mono", ui-monospace, Consolas, monospace;
     overflow-x: auto;
     white-space: pre-wrap;
     word-break: break-all;
@@ -340,7 +340,7 @@ ol {
     flex-direction: row;
     align-items: center;
     gap: var(--space-sm);
-    font-weight: 700;
+    font-weight: 500;
     color: var(--color-text-primary);
     font-size: var(--font-size-sm);
 }

@@ -26,7 +26,8 @@ func (l *Logger) Error(msg string) {
 	fmt.Printf("%s %s\n", fmtStr("✗", ColorRed, true), msg)
 }
 
-func (l *Logger) Fatal(msg string) {
+func (l *Logger) Fatal(err error) {
+	msg := fmt.Sprintf("Failed to install BPB Panel: %s", err.Error())
 	l.Error(msg)
 	os.Exit(1)
 }

@@ -62,20 +62,20 @@ func main() {
 | __  |  _  | __  |
 | __ -|   __| __ -|
 |_____|__|  |_____| Wizard CLI %s
-`, "3.0.0")
+`, VERSION)
 	fmt.Print(fmtStr(header, ColorBlue, true))
 
 	for {
 		tokenStore := newTokenStore()
 		store, err := tokenStore.LoadLogins()
 		if err != nil {
-			logger.Fatal("Failed to load Cloudflare logins.")
+			logger.Fatal(err)
 		}
 		noStore := store.ActiveEmail == ""
 
 		var acc *cfAccount
 		if noStore {
-			acc = createCfAccount(ctx, logger)
+			acc = createAccount(ctx, logger)
 			tokenStore.SaveLogin(cfLogin{
 				Email: acc.Email,
 				ID:    acc.ID,
@@ -96,7 +96,7 @@ func main() {
 
 			index := promptLogin(logger, len(store.Logins))
 			if index == 0 {
-				acc = createCfAccount(ctx, logger)
+				acc = createAccount(ctx, logger)
 				tokenStore.SaveLogin(cfLogin{
 					Email: acc.Email,
 					ID:    acc.ID,
@@ -127,7 +127,7 @@ func main() {
 		logger.Info("Installing BPB Panel...")
 		namespaceID, err := acc.CreateKVNamespace(ctx, workerName, deployType)
 		if err != nil {
-			logger.Fatal("Failed to create KV: " + err.Error())
+			logger.Fatal(err)
 		}
 		logger.Success("KV namespace created successfully!")
 
@@ -138,7 +138,8 @@ func main() {
 			panelURL = deployToWorkers(ctx, acc, logger, workerName, namespaceID)
 		}
 
-		logger.Success("Done")
+		logger.Success("BPB Panel successfully installed!")
+		fmt.Println()
 		logger.Info("Panel URL: " + fmtStr(panelURL, ColorBlue, true))
 
 		tryAgain := promptWizard(logger)
@@ -149,11 +150,11 @@ func main() {
 	}
 }
 
-func createCfAccount(ctx context.Context, logger *Logger) *cfAccount {
+func createAccount(ctx context.Context, logger *Logger) *cfAccount {
 	fmt.Println()
 	tokenUrl, err := buildTokenURL()
 	if err != nil {
-		logger.Fatal("Failed to create token template URL: " + err.Error())
+		logger.Fatal(err)
 	}
 	msg := fmt.Sprintf(
 		"Please visit link below to create an API token. You should %s, %s, copy it and come back here.\n\n%s",
@@ -164,18 +165,9 @@ func createCfAccount(ctx context.Context, logger *Logger) *cfAccount {
 	logger.Info(msg)
 
 	token := promptToken(logger)
-	acc := NewCfAccount(token)
-	if err := acc.VerifyToken(ctx); err != nil {
-		logger.Fatal("Failed to verify API token: " + err.Error())
-	}
-	logger.Success("API Token is verified.")
-
-	if err := acc.GetAccountID(ctx); err != nil {
-		logger.Fatal("Failed to get account ID: " + err.Error())
-	}
-
-	if err := acc.GetUserEmail(ctx); err != nil {
-		logger.Fatal("Failed to get user Email: " + err.Error())
+	acc, err := CreateAccount(ctx, token)
+	if err != nil {
+		logger.Fatal(err)
 	}
 
 	return acc
@@ -184,22 +176,22 @@ func createCfAccount(ctx context.Context, logger *Logger) *cfAccount {
 func deployToWorkers(ctx context.Context, acc *cfAccount, logger *Logger, workerName, namespaceID string) string {
 	subdomain, err := acc.GetWorkersSubdomain(ctx)
 	if err != nil {
-		logger.Fatal("Failed to get account's workers.dev subdomain: " + err.Error())
+		logger.Fatal(err)
 	}
 
 	script, settings, err := buildScript(acc, workerName, subdomain)
 	if err != nil {
-		logger.Fatal("Failed to build script: " + err.Error())
+		logger.Fatal(err)
 	}
 	logger.Success("Script built successfully!")
 
 	if err := acc.DeployWorker(ctx, workerName, script, namespaceID); err != nil {
-		logger.Fatal("Failed to deploy worker script: " + err.Error())
+		logger.Fatal(err)
 	}
-	logger.Success("BPB Panel installed successfully!")
+	logger.Success("Worker deployed successfully!")
 
 	if err := acc.EnableSubdomain(ctx, workerName); err != nil {
-		logger.Fatal("Failed to enable worker subdomain: " + err.Error())
+		logger.Fatal(err)
 	}
 	logger.Success("Worker subdomain enabled successfully!")
 
@@ -210,19 +202,20 @@ func deployToWorkers(ctx context.Context, acc *cfAccount, logger *Logger, worker
 func deployToPages(ctx context.Context, acc *cfAccount, logger *Logger, workerName, namespaceID string) string {
 	script, settings, err := buildScript(acc, workerName, "pages.dev")
 	if err != nil {
-		logger.Fatal("Failed to build script: " + err.Error())
+		logger.Fatal(err)
 	}
 	logger.Success("Script built successfully!")
 
 	subdomain, err := acc.CreatePagesProject(ctx, workerName, namespaceID)
 	if err != nil {
-		logger.Fatal("Failed to create Pages Project: " + err.Error())
+		logger.Fatal(err)
 	}
 	logger.Success("Pages project created successfully!")
 
 	if err := acc.DeployPagesScript(ctx, workerName, script); err != nil {
-		logger.Fatal("Failed to deploy Pages script: " + err.Error())
+		logger.Fatal(err)
 	}
+	logger.Success("Pages deployed successfully!")
 
 	path := url.QueryEscape(settings.SecurePath)
 	return fmt.Sprintf("https://%s/%s/panel", subdomain, path)
@@ -235,7 +228,7 @@ func promptWizard(logger *Logger) bool {
 		fmt.Printf("%s Run wizard again [y/n]: ", fmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Fatal("Failed to read user response: " + err.Error())
+			logger.Fatal(err)
 		}
 		resp := strings.TrimSpace(line)
 		switch resp {
@@ -257,13 +250,13 @@ func promptLogin(logger *Logger, total int) int {
 		fmt.Printf("%s Choose a Cloudflare account: ", fmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Fatal("Failed to read account number: " + err.Error())
+			logger.Fatal(err)
 		}
 		resp := strings.TrimSpace(line)
 
 		number, err := strconv.Atoi(resp)
 		if err != nil {
-			logger.Fatal("Invalid input type: " + err.Error())
+			logger.Fatal(err)
 		}
 
 		if number > total {
@@ -282,7 +275,7 @@ func promptToken(logger *Logger) string {
 		fmt.Printf("%s Cloudflare API Token: ", fmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Fatal("Failed to read token: " + err.Error())
+			logger.Fatal(err)
 		}
 
 		resp := strings.TrimSpace(line)
@@ -300,7 +293,7 @@ func promptSubdomain(logger *Logger) string {
 	for {
 		subdomain, err := randSubdomain()
 		if err != nil {
-			logger.Fatal("Failed to create random subdomain: " + err.Error())
+			logger.Fatal(err)
 			continue
 		}
 		fmt.Println()
@@ -310,7 +303,7 @@ func promptSubdomain(logger *Logger) string {
 		fmt.Printf("%s Enter a subdomain or use the random [Default: random]: ", fmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Fatal("Failed to read subdomain: " + err.Error())
+			logger.Fatal(err)
 		}
 		resp := strings.TrimSpace(line)
 
@@ -320,7 +313,6 @@ func promptSubdomain(logger *Logger) string {
 				logger.Error("Subdomain consists of [a-z], [0-9] and '-', It can not start or end with '-'.")
 				continue
 			}
-
 			return resp
 		}
 
@@ -337,7 +329,7 @@ func promptDeployType(logger *Logger) string {
 		fmt.Printf("%s Choose a deployment method [Default: Workers]: ", fmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			logger.Fatal("Failed to read subdomain: " + err.Error())
+			logger.Fatal(err)
 		}
 		choice := strings.ToLower(strings.TrimSpace(line))
 
@@ -400,28 +392,6 @@ func configTermux(logger *Logger) {
 		return
 	}
 
-	net.DefaultResolver = &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{Timeout: 5 * time.Second}
-			servers := []string{
-				"1.1.1.1:53",
-				"8.8.8.8:53",
-				"9.9.9.9:53",
-				"223.5.5.5",
-			}
-			var lastErr error
-			for _, s := range servers {
-				conn, err := d.DialContext(ctx, "udp", s)
-				if err == nil {
-					return conn, nil
-				}
-				lastErr = err
-			}
-			return nil, lastErr
-		},
-	}
-
 	if os.Getenv("SSL_CERT_FILE") != "" {
 		return
 	}
@@ -436,5 +406,27 @@ func configTermux(logger *Logger) {
 		}
 	}
 
-	logger.Fatal("No CA cert bundle found. Cloudflare API calls will likely fail.")
+	net.DefaultResolver = &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{Timeout: 5 * time.Second}
+			servers := []string{
+				"1.1.1.1:53",
+				"8.8.8.8:53",
+				"9.9.9.9:53",
+				"223.5.5.5:53",
+			}
+			var lastErr error
+			for _, s := range servers {
+				conn, err := d.DialContext(ctx, "udp", s)
+				if err == nil {
+					return conn, nil
+				}
+				lastErr = err
+			}
+			return nil, lastErr
+		},
+	}
+
+	logger.Fatal(fmt.Errorf("No CA cert bundle found. Cloudflare API calls will likely fail."))
 }

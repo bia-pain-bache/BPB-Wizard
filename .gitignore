@@ -8,12 +8,14 @@
 !random.go
 !script.go
 !token_store.go
-!public/
-!public/**
+!web/
+!web/**
 !.github/
 !.github/**
 !Makefile
 !wrangler.toml
+!package.json
+!tsconfig.json
 !RELEASE.md
 !install.sh
 !install.ps1

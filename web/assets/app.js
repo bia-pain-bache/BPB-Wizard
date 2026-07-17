@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('apiToken').removeAttribute('required');
         document.getElementById('apiTokenGroup').style.display = 'none';
         document.getElementById('steps').style.display = 'none';
-        userElm.textContent = `Cloudflare Account: ${user}`;
+        userElm.textContent = `Welcome ${user}`;
         userElm.style.display = 'block';
     }
 });
@@ -95,7 +95,10 @@ async function startDeploymentPipeline(payload) {
                 if (!line.trim()) continue;
                 const { type, message } = JSON.parse(line);
                 const handlers = {
-                    log: () => {
+                    success: () => {
+                        log('success', message);
+                    },
+                    info: () => {
                         log('info', message);
                     },
                     error: () => {
@@ -103,22 +106,22 @@ async function startDeploymentPipeline(payload) {
                         log('info', 'Standby...\n');
                     },
                     complete: () => {
-                        log('success', 'BPB Panel successfully deployed!');
+                        log('success', 'BPB Panel successfully installed!\n');
                         if (message) {
                             const payload = JSON.parse(message);
-                            log('success', 'Panel URL: ', payload.url);
-                            
+                            log('info', 'Panel URL: ', payload.url);
+
                             if (!globalThis.isPrivateLink) {
                                 globalThis.key = payload.key;
                                 globalThis.user = payload.user;
-                                
+
                                 const privateUrlToast = document.getElementById('privateUrlToast');
                                 privateUrlToast.style.display = 'flex';
                             }
 
                             const deploymentToast = document.getElementById('deploymentToast');
                             const link = document.getElementById('liveUrl');
-                            
+
                             if (link) {
                                 link.href = payload.url;
                             }
@@ -138,14 +141,34 @@ async function startDeploymentPipeline(payload) {
     }
 }
 
-function log(type, message, url) {
-    const labels = {
-        info: '<span class="terminal-info">[INFO]</span>',
-        error: '<span class="terminal-error">[ERROR]</span>',
-        success: '<span class="terminal-success">[SUCCESS]</span>'
-    };
+const LABEL_GLYPHS = {
+    info: { icon: '•', class: 'terminal-info' },
+    error: { icon: '✗', class: 'terminal-error' },
+    success: { icon: '✓', class: 'terminal-success' }
+};
 
-    let msg = `<br>${labels[type]} ${message}`;
-    if (url) msg += `<a href="${url}" target="_blank" rel="noopener" class="terminal-url">${url}</a>`;
-    out.innerHTML += msg;
+function log(type, message, url) {
+    out.appendChild(elm('br'));
+
+    const label = elm('span', { className: LABEL_GLYPHS[type].class, textContent: LABEL_GLYPHS[type].icon });
+    const text = elm('span', { textContent: ` ${message}` });
+    out.append(label, text);
+
+    if (url) {
+        const link = elm('a', {
+            href: url,
+            target: '_blank',
+            rel: 'noopener',
+            className: 'terminal-url',
+            textContent: url
+        });
+        out.appendChild(link);
+    }
+}
+
+function elm(tag, props = {}, children = []) {
+    const node = document.createElement(tag);
+    Object.assign(node, props);
+    node.append(...[].concat(children));
+    return node;
 }

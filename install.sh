@@ -35,6 +35,7 @@ BINARY="wizard"
 INSTALL_DIR="bpb-wizard"
 ARCHIVE="BPB-Wizard-${OS_LOWER}-${ARCH}.${EXT}"
 WORKER_URL="https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
+ARCHIVE_URL="https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/${ARCHIVE}"
 
 LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION)
 
@@ -58,7 +59,7 @@ fi
 
 if [ "${NEEDS_INSTALL}" = "1" ]; then
     echo "Downloading ${ARCHIVE}..."
-    curl -L -# -o "${ARCHIVE}" "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/${ARCHIVE}"
+    curl -L -# -o "${ARCHIVE}" "${ARCHIVE_URL}"
 
     if [ "$EXT" = "zip" ]; then
         unzip -q -o "${ARCHIVE}" -d "${INSTALL_DIR}"

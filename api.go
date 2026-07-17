@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"mime/multipart"
-	"net/textproto"
 	"time"
 
 	"github.com/cloudflare/cloudflare-go/v7"
@@ -20,54 +18,44 @@ type cfAccount struct {
 	Token  string
 	ID     string
 	Email  string
-	client *cloudflare.Client
+	Client *cloudflare.Client
 }
 
 func NewCfAccount(token string) *cfAccount {
 	client := cloudflare.NewClient(option.WithAPIToken(token))
 	return &cfAccount{
-		Token:  token,
-		client: client,
+		Token: token,
+		Client: client,
 	}
 }
 
-func (acc *cfAccount) VerifyToken(ctx context.Context) error {
-	_, err := acc.client.User.Tokens.Verify(ctx)
+func CreateAccount(ctx context.Context, token string) (*cfAccount, error) {
+	acc := NewCfAccount(token)
+	
+	tokenRes, err := acc.Client.User.Tokens.Verify(ctx)
+	if err != nil || tokenRes.Status != "active" {
+		return nil, err
+	}
+	
+	accountsRes, err := acc.Client.Accounts.List(ctx, accounts.AccountListParams{})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
-}
-
-func (acc *cfAccount) GetAccountID(ctx context.Context) error {
-	res, err := acc.client.Accounts.List(ctx, accounts.AccountListParams{})
+	acc.ID = accountsRes.Result[0].ID
+	
+	userRes, err := acc.Client.User.Get(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	accounts := res.Result
-	if len(accounts) == 0 {
-		return fmt.Errorf("no Cloudflare accounts found for this token")
-	}
-
-	acc.ID = accounts[0].ID
-	return nil
-}
-
-func (acc *cfAccount) GetUserEmail(ctx context.Context) error {
-	user, err := acc.client.User.Get(ctx)
-	if err != nil {
-		return err
-	}
-
-	acc.Email = user.Email
-	return nil
+	acc.Email = userRes.Email
+	
+	return acc, nil
 }
 
 func (acc *cfAccount) NameTaken(ctx context.Context, deployType, name string) bool {
 	var err error
 	if deployType == "pages" {
-		_, err = acc.client.Pages.Projects.Get(
+		_, err = acc.Client.Pages.Projects.Get(
 			ctx,
 			name,
 			pages.ProjectGetParams{
@@ -77,7 +65,7 @@ func (acc *cfAccount) NameTaken(ctx context.Context, deployType, name string) bo
 		return err == nil
 	}
 
-	_, err = acc.client.Workers.Scripts.Get(
+	_, err = acc.Client.Workers.Scripts.Get(
 		ctx,
 		name,
 		workers.ScriptGetParams{
@@ -90,7 +78,7 @@ func (acc *cfAccount) NameTaken(ctx context.Context, deployType, name string) bo
 
 func (acc *cfAccount) CreateKVNamespace(ctx context.Context, workerName string, deployType string) (string, error) {
 	title := fmt.Sprintf("%s-%s-%s", workerName, deployType, time.Now().UTC().Format(time.RFC3339))
-	namespace, err := acc.client.KV.Namespaces.New(ctx, kv.NamespaceNewParams{
+	namespace, err := acc.Client.KV.Namespaces.New(ctx, kv.NamespaceNewParams{
 		AccountID: cloudflare.F(acc.ID),
 		Title:     cloudflare.F(title),
 	})
@@ -102,7 +90,7 @@ func (acc *cfAccount) CreateKVNamespace(ctx context.Context, workerName string, 
 }
 
 func (acc *cfAccount) GetWorkersSubdomain(ctx context.Context) (string, error) {
-	subdomain, err := acc.client.Workers.Subdomains.Get(ctx, workers.SubdomainGetParams{
+	subdomain, err := acc.Client.Workers.Subdomains.Get(ctx, workers.SubdomainGetParams{
 		AccountID: cloudflare.F(acc.ID),
 	})
 	if err != nil {
@@ -112,31 +100,8 @@ func (acc *cfAccount) GetWorkersSubdomain(ctx context.Context) (string, error) {
 	return subdomain.Subdomain + ".workers.dev", nil
 }
 
-func addPart(w *multipart.Writer, fieldName, filename, contentType string, content []byte) error {
-	var disposition string
-	if filename != "" {
-		disposition = fmt.Sprintf(`form-data; name="%s"; filename="%s"`, fieldName, filename)
-	} else {
-		disposition = fmt.Sprintf(`form-data; name="%s"`, fieldName)
-	}
-
-	h := textproto.MIMEHeader{}
-	h.Set("Content-Disposition", disposition)
-	if contentType != "" {
-		h.Set("Content-Type", contentType)
-	}
-
-	part, err := w.CreatePart(h)
-	if err != nil {
-		return err
-	}
-	_, err = part.Write(content)
-
-	return err
-}
-
 func (acc *cfAccount) DeployWorker(ctx context.Context, name string, script io.Reader, namespaceID string) error {
-	_, err := acc.client.Workers.Scripts.Update(
+	_, err := acc.Client.Workers.Scripts.Update(
 		ctx,
 		name,
 		workers.ScriptUpdateParams{
@@ -170,7 +135,7 @@ func (acc *cfAccount) DeployWorker(ctx context.Context, name string, script io.R
 }
 
 func (acc *cfAccount) EnableSubdomain(ctx context.Context, subdomain string) error {
-	_, err := acc.client.Workers.Scripts.Subdomain.New(
+	_, err := acc.Client.Workers.Scripts.Subdomain.New(
 		ctx,
 		subdomain,
 		workers.ScriptSubdomainNewParams{
@@ -186,7 +151,7 @@ func (acc *cfAccount) EnableSubdomain(ctx context.Context, subdomain string) err
 }
 
 func (acc *cfAccount) CreatePagesProject(ctx context.Context, name, namespaceID string) (string, error) {
-	project, err := acc.client.Pages.Projects.New(context.TODO(), pages.ProjectNewParams{
+	project, err := acc.Client.Pages.Projects.New(context.TODO(), pages.ProjectNewParams{
 		AccountID: cloudflare.F(acc.ID),
 		Name:      cloudflare.F(name),
 		ProductionBranch: cloudflare.F("main"),
@@ -209,7 +174,7 @@ func (acc *cfAccount) CreatePagesProject(ctx context.Context, name, namespaceID 
 }
 
 func (acc *cfAccount) DeployPagesScript(ctx context.Context, name string, script io.Reader) error {
-	_, er := acc.client.Pages.Projects.Deployments.New(
+	_, er := acc.Client.Pages.Projects.Deployments.New(
 		ctx,
 		name,
 		pages.ProjectDeploymentNewParams{

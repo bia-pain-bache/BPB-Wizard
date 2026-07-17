@@ -83,7 +83,7 @@ func buildScript(acc *cfAccount, workerName, subdomain string) (io.Reader, *Embe
 		string(settingsJSON),
 		raw,
 	)
-
 	var reader io.Reader = strings.NewReader(script)
+	
 	return reader, settings, nil
 }

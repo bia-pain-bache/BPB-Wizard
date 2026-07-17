@@ -12,11 +12,12 @@ func randInt(min, max int) int {
 
 func randString(charset string, minLen, maxLen int) string {
 	length := minLen + mrand.Intn(maxLen-minLen+1)
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[mrand.Intn(len(charset))]
+	bytes := make([]byte, length)
+	for i := range bytes {
+		bytes[i] = charset[mrand.Intn(len(charset))]
 	}
-	return string(b)
+	
+	return string(bytes)
 }
 
 func randSubdomain() (string, error) {
@@ -50,5 +51,5 @@ func randCode() string {
 		fmt.Fprintf(&funcsBuilder, "function %s() { return %d; }\n", funcName, value)
 	}
 
-	return varsBuilder.String() + "\n" + funcsBuilder.String()
+	return varsBuilder.String() + funcsBuilder.String()
 }

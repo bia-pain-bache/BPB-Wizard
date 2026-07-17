@@ -9,7 +9,7 @@ if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq 
 }
 
 $Archive = "BPB-Wizard-windows-$Arch.zip"
-$DownloadUrl = "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/$Archive"
+$ArchiveUrl = "https://github.com/bia-pain-bache/BPB-Wizard/releases/latest/download/$Archive"
 $WorkerUrl = "https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
 $LatestVersion = (Invoke-RestMethod -Uri "https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION").Trim()
 
@@ -39,7 +39,7 @@ if ($NeedsInstall) {
 
     $httpClient = New-Object System.Net.Http.HttpClient
     try {
-        $zipBytes = $httpClient.GetByteArrayAsync($DownloadUrl).GetAwaiter().GetResult()
+        $zipBytes = $httpClient.GetByteArrayAsync($ArchiveUrl).GetAwaiter().GetResult()
     } finally {
         $httpClient.Dispose()
     }
