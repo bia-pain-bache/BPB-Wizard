@@ -20,9 +20,12 @@ export async function buildScript(
     let url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js';
     if (preRelease) {
         const res = await fetch('https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/dev/package.json');
-        if(!res.ok) throw new Error(`Failed to get pre-release script: status ${res.status} at ${res.url}`)
+        if(!res.ok) {
+            throw new Error(`Failed to get pre-release script: status ${res.status} at ${res.url}`);
+        }
+
         const { version } = await res.json() as any;
-        url = `https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/tag/v${version}`;
+        url = `https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/download/v${version}/worker.js`;
     }
 
     const res = await fetch(url);

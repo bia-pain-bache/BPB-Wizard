@@ -128,11 +128,16 @@ ol {
     text-align: center;
 }
 
+.card-header-group {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
 .header {
     font-size: var(--font-size-lg);
     line-height: var(--line-height-lg);
     font-weight: 700;
-    margin-bottom: var(--space-sm);
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -264,10 +269,12 @@ ol {
     flex-direction: row;
     cursor: pointer;
     outline: none;
+    transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
     color: var(--color-brand-hover);
+    scale: 1.1;
 }
 
 .btn-secondary:active {
@@ -349,7 +356,7 @@ ol {
     width: 1.5rem;
     height: 1.5rem;
     display: flex;
-    fill: var(--color-success);
+    color: var(--color-success);
 }
 
 .toast-close-btn {
@@ -358,10 +365,12 @@ ol {
     color: var(--color-text-secondary);
     cursor: pointer;
     font-size: var(--font-size-base);
+    transition: all 0.2s ease;
 }
 
 .toast-close-btn:hover {
     color: var(--color-text-primary);
+    scale: 1.1;
 }
 
 .toast-body {
@@ -377,13 +386,15 @@ ol {
 
 .toast-link {
     color: var(--color-brand-primary);
-    text-decoration: underline;
+    text-decoration: none;
     font-weight: 500;
     display: inline-flex;
+    transition: all 0.2s ease;
 }
 
 .toast-link:hover {
     color: var(--color-brand-hover);
+    scale: 1.1;
 }
 
 .toast-link:active {
