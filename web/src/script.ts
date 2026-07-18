@@ -7,11 +7,24 @@ interface Script {
     path: string;
 }
 
-export async function buildScript(account: CFAccount, workerName: string, subdomain: string, filename: string): Promise<Script> {
+export async function buildScript(
+    account: CFAccount,
+    workerName: string,
+    subdomain: string,
+    filename: string,
+    preRelease: boolean
+): Promise<Script> {
     const pathCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456780-_';
     const passCharset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@$&*_-+;:,.';
 
-    const url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/download/v5.1.0/worker.js';
+    let url = 'https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js';
+    if (preRelease) {
+        const res = await fetch('https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/dev/package.json');
+        if(!res.ok) throw new Error(`Failed to get pre-release script: status ${res.status} at ${res.url}`)
+        const { version } = await res.json() as any;
+        url = `https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/tag/v${version}`;
+    }
+
     const res = await fetch(url);
     if (!res.ok) {
         throw new Error(`Failed to get panel script: status ${res.status} at ${res.url}`)

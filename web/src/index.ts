@@ -25,6 +25,7 @@ export default {
             (async () => {
                 try {
                     const key = url.searchParams.get('key');
+                    const preRelease = url.searchParams.get('pre-release') === 'true';
                     const formData = await request.formData();
                     const apiToken = key ? await decrypt(key, env.SECRET) : formData.get('apiToken')?.toString().trim() ?? '';
                     const deployType = formData.get('deployType')?.toString() || 'workers';
@@ -40,9 +41,9 @@ export default {
                     success('KV namespace created successfully!');
 
                     if (deployType === 'pages') {
-                        await deployPages(env, account, workerName, namespaceId, logger);
+                        await deployPages(env, account, workerName, namespaceId, logger, preRelease);
                     } else {
-                        await deployWorkers(env, account, workerName, namespaceId, logger);
+                        await deployWorkers(env, account, workerName, namespaceId, logger, preRelease);
                     }
                 } catch (err) {
                     error(`Failed to install BPB Panel: ${err}`);
@@ -71,11 +72,12 @@ async function deployPages(
     account: CFAccount,
     workerName: string,
     namespaceId: string,
-    logger: StreamLogger
+    logger: StreamLogger,
+    preRelease: boolean,
 ) {
     const { success, complete } = logger;
 
-    const { script, path } = await buildScript(account, workerName, 'pages.dev', '_worker.js');
+    const { script, path } = await buildScript(account, workerName, 'pages.dev', '_worker.js', preRelease);
     success('Script built successfully!');
 
     const subdomain = await account.createPagesProject(workerName, namespaceId);
@@ -99,13 +101,14 @@ async function deployWorkers(
     account: CFAccount,
     workerName: string,
     namespaceId: string,
-    logger: StreamLogger
+    logger: StreamLogger,
+    preRelease: boolean
 ) {
     const { success, complete } = logger;
     let subdomain: string;
     subdomain = await account.getWorkersSubdomain();
 
-    const { script, path } = await buildScript(account, workerName, subdomain, 'worker.js');
+    const { script, path } = await buildScript(account, workerName, subdomain, 'worker.js', preRelease);
     success('Script built successfully!');
 
     await account.deployWorker(workerName, script, namespaceId);

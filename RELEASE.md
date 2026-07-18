@@ -12,7 +12,25 @@ Wizard has web and CLI editions now. Both editions deploy each BPB Panel with a 
 > [!TIP]
 > Wizard CLI version can only be used by scripts. Standalone execution is not permitted from now on. Windows users can only use `PowerShell` script to run the wizard.
 
-## Android (Termux) - Linux - macOS
+## Web edition
+
+To install the latest stable version of BPB Panel:
+
+```url
+https://wizard.bpb-panel.workers.dev
+```
+
+To install the latest version even if it's a pre-release:
+
+```url
+https://wizard.bpb-panel.workers.dev?pre-release=true
+```
+
+<br>
+
+## CLI edition
+
+### Android (Termux) - Linux - macOS
 
 Android users who have Termux installed on their device, Linux and macOS users can use this bash:
 
@@ -20,7 +38,7 @@ Android users who have Termux installed on their device, Linux and macOS users c
 bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.sh)
 ```
 
-## Windows (PowerShell)
+### Windows (PowerShell)
 
 Windows users should use this script in PowerShell only.
 
