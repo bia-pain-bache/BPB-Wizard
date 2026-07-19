@@ -1,0 +1,10 @@
+name = "wizard"
+main = "web/src/index.ts"
+compatibility_date = "2026-07-17"
+workers_dev = true
+keep_vars = true
+
+[assets]
+directory = "web/assets"
+binding = "ASSETS"
+run_worker_first = true

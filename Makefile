@@ -1,14 +1,9 @@
 VER ?= $(VERSION)
 GOOS := $(shell go env GOOS)
 GOARCH := $(shell go env GOARCH)
-
-LDFLAGS = -s -w \
-	-X "main.BuildTimestamp=$(shell date -u '+%Y-%m-%d %H:%M:%S')" \
-	-X "main.VERSION=$(VER)" \
-	-X "main.goVersion=$(shell go version | sed -r 's/go version go(.*)\ .*/\1/')"
+LDFLAGS = -s -w -X "main.VERSION=$(VER)"
 
 GO := GO111MODULE=on CGO_ENABLED=0 go
-GOLANGCI_LINT_VERSION = v1.61.0
 APP_NAME := BPB-Wizard
 OUT_DIR := bin
 DIST_DIR := dist
@@ -24,7 +19,7 @@ build:
 	fi; \
 	echo "Building for $(GOOS)-$(GOARCH)..."; \
 	outdir="$(OUT_DIR)/$(APP_NAME)-$(GOOS)-$(GOARCH)"; \
-	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o "$$outdir/Wizard$$ext"; \
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o "$$outdir/wizard$$ext"; \
 	cp LICENSE $$outdir/; \
 	archive="$(DIST_DIR)/$(APP_NAME)-$(GOOS)-$(GOARCH)"; \
 	if [ "$(GOOS)" = "windows" ] || [ "$(GOOS)" = "darwin" ]; then \

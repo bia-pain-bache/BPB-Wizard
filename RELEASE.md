@@ -1,8 +1,47 @@
-# ⚙️ Bug fixes and Improvements
+# 🎉 BPB Wizard Next Generation
 
-- Added `Easy` mode for creating panel, all secrets get generated randomly.
-- Try to alleviate AntiViruses False positive
-- Avoid Cloudflare login on each Wizard run, you need to login on your device once.
-- Added multiple accounts login #67
-- Minor bug fixes #66
-- Updated dependencies
+Wizard has web and CLI editions now. Both editions deploy each BPB Panel with a unique hash to minimize Cloudflare errors. The web edition generates a `Private Link` after deployment which enables ONE-CLICK installations per Cloudflare account. However Wizard CLI stores your logins on your operating system and supports multiple accounts.
+
+- Adapted BPB Panel next geneneration build flow.
+- All deployments will have unique worker hash.
+- Implemented script execution in order to prevent AVs False Positive. The script downloads the worker script on behalf of wizard now.
+- Wizard Web fully rewrote in TS, using Cloudflare SDK.
+- Wizard Web UI improvements.
+- Sync CLI and Web terminal user experience.
+
+> [!TIP]
+> Wizard CLI version can only be used by scripts. Standalone execution is not permitted from now on. Windows users can only use `PowerShell` script to run the wizard.
+
+## Web edition
+
+To install the latest stable version of BPB Panel:
+
+```url
+https://wizard.bpb-panel.workers.dev
+```
+
+To install the latest version even if it's a pre-release:
+
+```url
+https://wizard.bpb-panel.workers.dev?pre-release=true
+```
+
+<br>
+
+## CLI edition
+
+### Android (Termux) - Linux - macOS
+
+Android users who have Termux installed on their device, Linux and macOS users can use this bash:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.sh)
+```
+
+### Windows (PowerShell)
+
+Windows users should use this script in PowerShell only.
+
+```bash
+irm https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.ps1 | iex
+```

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BPB Wizard</title>
+    <link rel="icon" href="favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=alt_route,check_circle,cloud_upload,content_copy,key,keyboard_arrow_down,open_in_new,visibility,visibility_off" />
+    <link href="styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header-area">
+                <div class="card-header-group">
+                    <h3 class="header">
+                        <img src="favicon.ico" class="icon" />
+                        BPB Wizard
+                    </h3>
+                    <a href="https://github.com/bia-pain-bache/BPB-Wizard" target="_blank">
+                        <span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="2rem" height="2rem" viewBox="0 0 24 24"
+                                fill="white">
+                                <path
+                                    d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                            </svg>
+                        </span>
+                    </a>
+                </div>
+                <p class="subtitle">Install BPB Panel efficiently</p>
+                <h4 id="user" style="display: none;"></h4>
+                <ol id="steps">
+                    <li>
+                        <a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener noreferrer">Sign
+                            up</a> a Cloudflare account and verify it.
+                    </li>
+                    <li>
+                        <a id="tokenTemplate" href="" target="_blank" rel="noopener noreferrer">Create a token</a>
+                        , you should <b>Continue to summary</b>, <b>Create Token</b> and copy it.
+                    </li>
+                    <li>Paste it here, choose installation method and install.</li>
+                    <li>After installation you get a <b>Private Link</b> which enables one-click installation.</li>
+                </ol>
+            </div>
+
+            <form id="deployForm" class="form">
+                <div id="apiTokenGroup" class="input-group">
+                    <span class="input-icon">
+                        <span class="material-symbols-rounded">
+                            key
+                        </span>
+                    </span>
+                    <input id="apiToken" name="apiToken" type="password" class="input-field"
+                        placeholder="Cloudflare API Token" required />
+                    <button id="togglePassword" type="button" class="input-after-icon">
+                        <span id="eyeIcon" class="material-symbols-rounded">
+                            visibility
+                        </span>
+                        <span id="eyeOffIcon" class="material-symbols-rounded hidden">
+                            visibility_off
+                        </span>
+                    </button>
+                </div>
+
+                <div class="input-group">
+                    <span class="material-symbols-rounded input-icon">
+                        alt_route
+                    </span>
+                    <select id="deployType" name="deployType" class="form-select">
+                        <option value="workers">Cloudflare Workers</option>
+                        <option value="pages">Cloudflare Pages</option>
+                    </select>
+                    <span class="material-symbols-rounded input-after-icon">
+                        keyboard_arrow_down
+                    </span>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <span class="material-symbols-rounded">
+                        cloud_upload
+                    </span>
+                    Install
+                </button>
+
+                <div id="privateUrlToast" class="toast-card hidden">
+                    <div class="toast-header">
+                        <div class="toast-title">
+                            <span class="material-symbols-rounded toast-success-icon">
+                                check_circle
+                            </span>
+                            BPB Wizard private link
+                        </div>
+                        <button id="closePrivateUrlToast" class="toast-close-btn">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        Your private link to use wizard in one-click mode.
+                        <button id="copyURL" type="button" class="btn-secondary">
+                            <span class="material-symbols-rounded">
+                                content_copy
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="deploymentToast" class="toast-card hidden">
+                    <div class="toast-header">
+                        <div class="toast-title">
+                            <span class="material-symbols-rounded toast-success-icon">
+                                check_circle
+                            </span>
+                            Successfully installed
+                        </div>
+                        <button id="closeDeploymentToast" class="toast-close-btn">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="toast-body">
+                        Access your BPB Panel.
+                        <a id="liveUrl" href="#" target="_blank" class="toast-link">
+                            <span class="material-symbols-rounded">
+                                open_in_new
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
+            </form>
+
+            <pre id="output" class="terminal">●●● Standby
+            </pre>
+
+        </div>
+    </div>
+
+    <script src="app.js" defer></script>
+</body>
+
+</html>
