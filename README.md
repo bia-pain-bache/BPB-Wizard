@@ -22,6 +22,8 @@ https://wizard.bpb-panel.workers.dev
 
 ### Android (Termux) - Linux - macOS
 
+Make sure to install Termux from [Github source](https://github.com/termux/termux-app/releases/latest) not Google Play.
+
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.sh)
 ```
