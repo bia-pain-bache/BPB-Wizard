@@ -37,24 +37,10 @@ if (Test-Path $BinaryPath) {
 if ($NeedsInstall) {
     Write-Host "Downloading $Archive..."
 
-    $httpClient = New-Object System.Net.Http.HttpClient
-    try {
-        $zipBytes = $httpClient.GetByteArrayAsync($ArchiveUrl).GetAwaiter().GetResult()
-    } finally {
-        $httpClient.Dispose()
-    }
-
-    $zipStream = New-Object System.IO.MemoryStream(,$zipBytes)
-    try {
-        $zipArchive = [System.IO.Compression.ZipArchive]::new($zipStream, [System.IO.Compression.ZipArchiveMode]::Read)
-        try {
-            [System.IO.Compression.ZipFileExtensions]::ExtractToDirectory($zipArchive, (Resolve-Path $InstallDir), $true)
-        } finally {
-            $zipArchive.Dispose()
-        }
-    } finally {
-        $zipStream.Dispose()
-    }
+    $zipPath = Join-Path $InstallDir $Archive
+    Invoke-WebRequest -Uri $ArchiveUrl -OutFile $zipPath
+    Expand-Archive -Path $zipPath -DestinationPath $InstallDir -Force
+    Remove-Item $zipPath
 }
 
 Write-Host "Downloading worker.js..."

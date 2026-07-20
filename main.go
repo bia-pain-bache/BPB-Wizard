@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"os/signal"
@@ -16,7 +15,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 )
 
 type Color struct {
@@ -30,6 +28,7 @@ var (
 )
 
 var VERSION string
+var isTermux = false
 
 func main() {
 	versionFlag := flag.Bool("version", false, "print version info")
@@ -247,12 +246,15 @@ func promptLogin(logger *Logger, total int) int {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Println()
-		fmt.Printf("%s Choose a Cloudflare account: ", fmtStr(">", ColorBlue, true))
+		fmt.Printf("%s Choose a Cloudflare account [Default: active]: ", fmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			logger.Fatal(err)
 		}
 		resp := strings.TrimSpace(line)
+		if resp == "" {
+			return 1
+		}
 
 		number, err := strconv.Atoi(resp)
 		if err != nil {
@@ -392,6 +394,7 @@ func configTermux(logger *Logger) {
 		return
 	}
 
+	isTermux = true
 	if os.Getenv("SSL_CERT_FILE") != "" {
 		return
 	}
@@ -404,28 +407,6 @@ func configTermux(logger *Logger) {
 			os.Setenv("SSL_CERT_FILE", p)
 			return
 		}
-	}
-
-	net.DefaultResolver = &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{Timeout: 5 * time.Second}
-			servers := []string{
-				"1.1.1.1:53",
-				"8.8.8.8:53",
-				"9.9.9.9:53",
-				"223.5.5.5:53",
-			}
-			var lastErr error
-			for _, s := range servers {
-				conn, err := d.DialContext(ctx, "udp", s)
-				if err == nil {
-					return conn, nil
-				}
-				lastErr = err
-			}
-			return nil, lastErr
-		},
 	}
 
 	logger.Fatal(fmt.Errorf("No CA cert bundle found. Cloudflare API calls will likely fail."))
