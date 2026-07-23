@@ -34,6 +34,9 @@ bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/ma
 irm https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.ps1 | iex
 ```
 
+> [!TIP]
+> Wizard CLI edition can only be used by these scripts. Standalone execution is not permitted.
+
 ## 🌟 Features
 
 1. **Multi login**: You can manage several Cloudflare accounts using CLI edition. (Only first time token entry on each device).

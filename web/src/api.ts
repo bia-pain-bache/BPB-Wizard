@@ -1,4 +1,5 @@
 import Cloudflare, { Uploadable } from 'cloudflare';
+import { randSubdomain } from './random';
 
 export class CFAccount {
     readonly token: string;
@@ -59,12 +60,31 @@ export class CFAccount {
         return namespace.id;
     }
 
-    async getWorkersSubdomain(): Promise<string> {
-        const subdomain = await this.client.workers.subdomains.get({
+    async getWorkersDevSubdomain(): Promise<string> {
+        const res = await this.client.workers.subdomains.get({
             account_id: this.id,
         });
 
-        return `${subdomain.subdomain}.workers.dev`;
+        return `${res.subdomain}.workers.dev`;
+    }
+
+    async createWorkersDevSubdomain(): Promise<string> {
+        const maxAttempts = 3;
+
+        for (let i = 0; i < maxAttempts; i++) {
+            try {
+                const res = await this.client.workers.subdomains.update({
+                    account_id: this.id,
+                    subdomain: randSubdomain(),
+                });
+
+                return res.subdomain;
+            } catch (err) {
+                continue;
+            }
+        }
+
+        throw new Error(`Failed to create a unique workers.dev subdomain after ${maxAttempts} attempts.`);
     }
 
     async deployWorker(name: string, script: Uploadable, namespaceId: string) {

@@ -106,7 +106,13 @@ async function deployWorkers(
 ) {
     const { success, complete } = logger;
     let subdomain: string;
-    subdomain = await account.getWorkersSubdomain();
+    try {
+        subdomain = await account.getWorkersDevSubdomain();
+        success('Account workers subdomain is available!');
+    } catch (error) {
+        subdomain = await account.createWorkersDevSubdomain();
+        success('Fresh account, Workers subdomain created successfully!');
+    }
 
     const { script, path } = await buildScript(account, workerName, subdomain, 'worker.js', preRelease);
     success('Script built successfully!');
