@@ -3,11 +3,8 @@
 !go.mod
 !go.sum
 !main.go
-!api.go
-!logger.go
-!random.go
-!script.go
-!token_store.go
+!internal/
+!internal/**
 !web/
 !web/**
 !.github/
