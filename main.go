@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -40,54 +41,106 @@ func main() {
 	internal.ConfigTermux(logger)
 
 	header := fmt.Sprintf(`
- _____ _____ _____ 
+ _____ _____ _____
 | __  |  _  | __  |
 | __ -|   __| __ -|
 |_____|__|  |_____| Wizard CLI %s
 `, VERSION)
 	fmt.Print(internal.FmtStr(header, internal.ColorBlue, true))
 
+	tokenStore := internal.NewTokenStore(logger)
 	for {
-		tokenStore := internal.NewTokenStore()
 		store, err := tokenStore.LoadLogins()
-		if err != nil {
+		promptForEmptyStore := false
+		switch {
+		case errors.Is(err, internal.ErrMigrationDeclined):
+			logger.Info("Migration declined. The existing token store was not changed.")
+			return
+		case errors.Is(err, internal.ErrStoreReset):
+			promptForEmptyStore = true
+			store, err = tokenStore.LoadLogins()
+			if err != nil {
+				logger.Fatal(err)
+			}
+		case err != nil:
 			logger.Fatal(err)
 		}
-		noStore := store.ActiveEmail == ""
-
 		var acc *internal.CfAccount
-		if noStore {
+		if len(store.Logins) == 0 {
+			if promptForEmptyStore && !internal.PromptAddAccount(logger) {
+				logger.Info("No account was added. Exiting.")
+				return
+			}
 			acc = internal.CreateAccount(ctx, logger)
-			tokenStore.SaveLogin(internal.CfLogin{
+			if err := tokenStore.SaveLogin(internal.CfLogin{
 				Email: acc.Email,
 				ID:    acc.ID,
 				Token: acc.Token,
-			})
-		} else {
-			fmt.Println()
-			for index, account := range store.Logins {
-				counter := fmt.Sprintf("  %d.", index+1)
-				active := ""
-				if account.Email == store.ActiveEmail {
-					active = internal.FmtStr("[active]", internal.ColorGreen, true)
-				}
-
-				fmt.Printf("%s %s %s\n", internal.FmtStr(counter, internal.ColorBlue, true), account.Email, active)
+			}); err != nil {
+				logger.Fatal(err)
 			}
-			fmt.Printf("  %s Add a new token\n", internal.FmtStr("0.", internal.ColorBlue, true))
+		} else {
+			for acc == nil {
+				fmt.Println()
+				activeIndex := 0
+				for index, account := range store.Logins {
+					counter := fmt.Sprintf("  %d.", index+1)
+					active := ""
+					if account.Email == store.ActiveEmail {
+						activeIndex = index
+						active = internal.FmtStr("[active]", internal.ColorGreen, true)
+					}
 
-			index := internal.PromptLogin(logger, len(store.Logins))
-			if index == 0 {
-				acc = internal.CreateAccount(ctx, logger)
-				tokenStore.SaveLogin(internal.CfLogin{
-					Email: acc.Email,
-					ID:    acc.ID,
-					Token: acc.Token,
-				})
-			} else {
-				acc = internal.NewCfAccount(store.Logins[index-1].Token)
-				acc.ID = store.Logins[index-1].ID
-				acc.Email = store.Logins[index-1].Email
+					fmt.Printf("%s %s %s\n", internal.FmtStr(counter, internal.ColorBlue, true), account.Email, active)
+				}
+				fmt.Printf("  %s Add a new token\n", internal.FmtStr("0.", internal.ColorBlue, true))
+				removeCounter := fmt.Sprintf("%d.", len(store.Logins)+1)
+				fmt.Printf("  %s Remove a saved token\n", internal.FmtStr(removeCounter, internal.ColorBlue, true))
+
+				choice := internal.PromptLogin(logger, len(store.Logins))
+				switch choice.Action {
+				case internal.LoginAdd:
+					acc = internal.CreateAccount(ctx, logger)
+					if err := tokenStore.SaveLogin(internal.CfLogin{
+						Email: acc.Email,
+						ID:    acc.ID,
+						Token: acc.Token,
+					}); err != nil {
+						logger.Fatal(err)
+					}
+				case internal.LoginRemove:
+					index, ok := internal.PromptLoginRemoval(logger, store.Logins)
+					if !ok || !internal.ConfirmTokenRemoval(logger, store.Logins[index].Email) {
+						continue
+					}
+					store, err = tokenStore.DeleteLogin(store.Logins[index].Email)
+					if err != nil {
+						logger.Fatal(err)
+					}
+					logger.Success("Saved token removed successfully!")
+					if len(store.Logins) == 0 {
+						if !internal.PromptAddAccount(logger) {
+							logger.Info("No account was added. Exiting.")
+							return
+						}
+						acc = internal.CreateAccount(ctx, logger)
+						if err := tokenStore.SaveLogin(internal.CfLogin{
+							Email: acc.Email,
+							ID:    acc.ID,
+							Token: acc.Token,
+						}); err != nil {
+							logger.Fatal(err)
+						}
+					}
+				case internal.LoginSelect:
+					index := choice.Index
+					if choice.Index == -1 {
+						index = activeIndex
+					}
+					acc = internal.NewCfAccount(store.Logins[index].Token)
+					acc.ID = store.Logins[index].ID
+					acc.Email = store.Logins[index].Email
+				}
 			}
 		}
 
