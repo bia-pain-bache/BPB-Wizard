@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -47,14 +48,29 @@ func main() {
 `, VERSION)
 	fmt.Print(internal.FmtStr(header, internal.ColorBlue, true))
 
+	tokenStore := internal.NewTokenStore(logger)
 	for {
-		tokenStore := internal.NewTokenStore()
 		store, err := tokenStore.LoadLogins()
-		if err != nil {
+		promptForEmptyStore := false
+		switch {
+		case errors.Is(err, internal.ErrMigrationDeclined):
+			logger.Info("Migration declined. The existing token store was not changed.")
+			return
+		case errors.Is(err, internal.ErrStoreReset):
+			promptForEmptyStore = true
+			store, err = tokenStore.LoadLogins()
+			if err != nil {
+				logger.Fatal(err)
+			}
+		case err != nil:
 			logger.Fatal(err)
 		}
 		var acc *internal.CfAccount
 		if len(store.Logins) == 0 {
+			if promptForEmptyStore && !internal.PromptAddAccount(logger) {
+				logger.Info("No account was added. Exiting.")
+				return
+			}
 			acc = internal.CreateAccount(ctx, logger)
 			if err := tokenStore.SaveLogin(internal.CfLogin{
 				Email: acc.Email,

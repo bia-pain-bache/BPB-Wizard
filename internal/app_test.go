@@ -50,4 +50,7 @@ func TestRemovalPrompts(t *testing.T) {
 	if !promptAddAccount(logger, strings.NewReader("y\n"), &output) {
 		t.Fatal("expected add-account prompt to be accepted")
 	}
+	if promptAddAccount(logger, strings.NewReader("n\n"), &output) {
+		t.Fatal("expected add-account prompt to be declined")
+	}
 }

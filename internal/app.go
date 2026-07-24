@@ -230,6 +230,25 @@ func promptAddAccount(logger *Logger, input io.Reader, output io.Writer) bool {
 	return promptYesNo(logger, input, output, "No saved accounts remain. Add a new account [y/n]: ")
 }
 
+func ConfirmTokenMigration(logger *Logger) bool {
+	return promptYesNo(
+		logger,
+		os.Stdin,
+		os.Stdout,
+		"Migrate saved API tokens to protected storage [y/n]: ",
+	)
+}
+
+func ConfirmProtectedStoreReset(logger *Logger) bool {
+	logger.Error("The protected token store could not be unlocked after three attempts.")
+	return promptYesNo(
+		logger,
+		os.Stdin,
+		os.Stdout,
+		"Erase all saved accounts and tokens [y/n]: ",
+	)
+}
+
 func promptYesNo(logger *Logger, input io.Reader, output io.Writer, prompt string) bool {
 	reader := bufio.NewReader(input)
 	for {

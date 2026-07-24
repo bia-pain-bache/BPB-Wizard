@@ -44,3 +44,12 @@ irm https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.ps1
 3. **Cross platform CLI**: Works on all major operating systems i.e. Windows, Android (Termux), macOS and Linux.
 4. **ONE-CLICK installation**: Web edition creates a permanent `Private Link` to install BPB Panel on your account with one click in a few seconds.
 5. **Privacy**: Web edition gets deployed directly from this repository and CLI edition is built using Github action. There's no storage and all open-source.
+
+### Protected CLI tokens
+
+The CLI keeps account metadata in its local configuration file, but saves API tokens in the operating system credential vault when one is available. On Termux or systems without a supported credential vault, tokens are encrypted with AES-256-GCM using a master password of at least eight characters. The password is never stored and cannot be recovered; if it is lost, erase the protected store when prompted and add the Cloudflare accounts again.
+
+Existing plaintext CLI token stores require confirmation before they are migrated. Declining migration leaves the original file unchanged and exits the CLI.
+
+> [!IMPORTANT]
+> The deployed Worker or Pages script still contains the Cloudflare token because BPB Panel uses it at runtime. Local token protection does not change that deployment architecture.
