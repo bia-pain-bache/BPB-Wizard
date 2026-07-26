@@ -1,0 +1,12 @@
+name = "bpb-deployer-bot"
+main = "src/bot.ts"
+compatibility_date = "2024-05-15"
+
+# KV Namespace for Grammy Session State
+# Note: You need to create this namespace first and update the ID below
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = "a1420a75324e413a8d2972e92a45e5f5"
+
+[vars]
+# You will set your BOT_TOKEN using `wrangler secret put BOT_TOKEN`

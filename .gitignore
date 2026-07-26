@@ -19,3 +19,6 @@
 !assets
 !assets/**
 !VERSION
+!README.md
+!telegram-bot/
+!telegram-bot/**

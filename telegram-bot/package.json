@@ -1,0 +1,29 @@
+{
+  "name": "bpb-telegram-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node node_modules/typescript/bin/tsc && node src/bot.js",
+    "dev": "ts-node-dev --respawn src/bot.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@grammyjs/conversations": "^2.1.1",
+    "@grammyjs/storage-cloudflare": "^2.6.0",
+    "@types/uuid": "^10.0.0",
+    "cloudflare": "^7.0.0",
+    "grammy": "^1.45.1",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@types/form-data": "^2.2.1",
+    "@types/node": "^26.1.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.1",
+    "typescript": "^5.5.4"
+  }
+}
