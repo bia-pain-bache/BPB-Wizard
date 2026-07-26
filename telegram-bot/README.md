@@ -4,6 +4,9 @@ This directory contains the Telegram Bot for deploying and managing BPB Panel in
 
 The bot provides a conversational interface to deploy BPB Panel to Cloudflare Workers or Pages. It sets up the required KV namespaces and manages Cloudflare tokens securely via Telegram.
 
+## Live Demo
+You can try out the deployed bot here: [@IRBpb_wizardbot](https://t.me/IRBpb_wizardbot)
+
 ## Requirements
 - Node.js (v18+)
 - Cloudflare API Token (with Workers, KV, Pages, and DNS permissions)
