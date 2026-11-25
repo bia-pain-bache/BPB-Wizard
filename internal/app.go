@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -126,31 +127,145 @@ func PromptWizard(logger *Logger) bool {
 	}
 }
 
-func PromptLogin(logger *Logger, total int) int {
-	reader := bufio.NewReader(os.Stdin)
+type LoginAction int
+
+const (
+	LoginSelect LoginAction = iota
+	LoginAdd
+	LoginRemove
+)
+
+type LoginChoice struct {
+	Action LoginAction
+	Index  int
+}
+
+func PromptLogin(logger *Logger, total int) LoginChoice {
+	return promptLogin(logger, os.Stdin, os.Stdout, total)
+}
+
+func promptLogin(logger *Logger, input io.Reader, output io.Writer, total int) LoginChoice {
+	reader := bufio.NewReader(input)
 	for {
-		fmt.Println()
-		fmt.Printf("%s Choose a Cloudflare account [Default: active]: ", FmtStr(">", ColorBlue, true))
+		fmt.Fprintln(output)
+		fmt.Fprintf(output, "%s Choose a Cloudflare account [Default: active]: ", FmtStr(">", ColorBlue, true))
 		line, err := reader.ReadString('\n')
 		if err != nil {
 			logger.Fatal(err)
 		}
-		resp := strings.TrimSpace(line)
+		resp := strings.ToLower(strings.TrimSpace(line))
 		if resp == "" {
-			return 1
+			return LoginChoice{Action: LoginSelect, Index: -1}
 		}
-
+		if resp == "0" {
+			return LoginChoice{Action: LoginAdd}
+		}
 		number, err := strconv.Atoi(resp)
 		if err != nil {
-			logger.Fatal(err)
+			logger.Error("Invalid choice, try again...")
+			continue
 		}
 
-		if number > total {
+		if number == total+1 {
+			return LoginChoice{Action: LoginRemove}
+		}
+		if number < 1 || number > total {
 			logger.Error("Out of range, try again...")
 			continue
 		}
 
-		return number
+		return LoginChoice{Action: LoginSelect, Index: number - 1}
+	}
+}
+
+func PromptLoginRemoval(logger *Logger, logins []CfLogin) (int, bool) {
+	return promptLoginRemoval(logger, os.Stdin, os.Stdout, logins)
+}
+
+func promptLoginRemoval(logger *Logger, input io.Reader, output io.Writer, logins []CfLogin) (int, bool) {
+	reader := bufio.NewReader(input)
+	for {
+		fmt.Fprintln(output)
+		for index, login := range logins {
+			fmt.Fprintf(output, "  %s %s\n", FmtStr(fmt.Sprintf("%d.", index+1), ColorBlue, true), login.Email)
+		}
+		fmt.Fprintf(output, "%s Choose an account to remove [c to cancel]: ", FmtStr(">", ColorBlue, true))
+
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			logger.Fatal(err)
+		}
+		resp := strings.ToLower(strings.TrimSpace(line))
+		if resp == "c" {
+			return 0, false
+		}
+
+		number, err := strconv.Atoi(resp)
+		if err != nil || number < 1 || number > len(logins) {
+			logger.Error("Out of range, try again...")
+			continue
+		}
+		return number - 1, true
+	}
+}
+
+func ConfirmTokenRemoval(logger *Logger, email string) bool {
+	return confirmTokenRemoval(logger, os.Stdin, os.Stdout, email)
+}
+
+func confirmTokenRemoval(logger *Logger, input io.Reader, output io.Writer, email string) bool {
+	return promptYesNo(
+		logger,
+		input,
+		output,
+		fmt.Sprintf("Remove the saved token for %s [y/n]: ", email),
+	)
+}
+
+func PromptAddAccount(logger *Logger) bool {
+	return promptAddAccount(logger, os.Stdin, os.Stdout)
+}
+
+func promptAddAccount(logger *Logger, input io.Reader, output io.Writer) bool {
+	return promptYesNo(logger, input, output, "No saved accounts remain. Add a new account [y/n]: ")
+}
+
+func ConfirmTokenMigration(logger *Logger) bool {
+	return promptYesNo(
+		logger,
+		os.Stdin,
+		os.Stdout,
+		"Migrate saved API tokens to protected storage [y/n]: ",
+	)
+}
+
+func ConfirmProtectedStoreReset(logger *Logger) bool {
+	logger.Error("The protected token store could not be unlocked after three attempts.")
+	return promptYesNo(
+		logger,
+		os.Stdin,
+		os.Stdout,
+		"Erase all saved accounts and tokens [y/n]: ",
+	)
+}
+
+func promptYesNo(logger *Logger, input io.Reader, output io.Writer, prompt string) bool {
+	reader := bufio.NewReader(input)
+	for {
+		fmt.Fprintln(output)
+		fmt.Fprintf(output, "%s %s", FmtStr(">", ColorBlue, true), prompt)
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			logger.Fatal(err)
+		}
+		switch strings.ToLower(strings.TrimSpace(line)) {
+		case "y":
+			return true
+		case "n":
+			return false
+		default:
+			logger.Error("Only 'y' or 'n', try again...")
+		}
 	}
 }
 
